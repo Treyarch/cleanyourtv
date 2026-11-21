@@ -157,6 +157,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** config.xml ambient_glow, overridable by a theme. Off: the glow view is gone and no fade or colour animator
      *  is started for it, so a focus move costs nothing extra on a launcher that runs all day. */
     private boolean ambientGlow;
+    private int ambientDrawableAlpha;
     /** config.xml app_glow: the highlight takes the focused app's colour on every tile. */
     private boolean appGlow;
     /** config.xml glow_style: the shape setAmbient paints the glow mask in. */
@@ -523,6 +524,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // a fade renders it into a full-screen offscreen buffer first.
         ambient.forceHasOverlappingRendering(false);
         ambientGlow = cfg.ambientGlow;
+        int wallpaperGlowOpacity = getResources().getInteger(R.integer.wallpaper_glow_opacity);
+        ambientDrawableAlpha = cfg.wallpaperEnabled && !cfg.wallpapers.isEmpty()
+                ? Math.max(0, Math.min(100, wallpaperGlowOpacity)) * 255 / 100 : 255;
         glowSnap = cfg.glowSnap;
         appGlow = cfg.appGlow;
         if (!ambientGlow) ambient.setVisibility(View.GONE);
@@ -548,9 +552,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         clockRefresh = new ClockRefresh(clockBlock);
         greetingColor = greeting.getCurrentTextColor();
         if (!cfg.showGreeting) greeting.setVisibility(View.GONE);
+        boolean rtlMenuBar = getResources().getBoolean(R.bool.rtl_menu_bar);
+        boolean clockBesideButtons = !rtlMenuBar && getResources().getBoolean(R.bool.clock_beside_buttons);
         // Keep the other header layouts as designed: their extra lines change the block's centre.
-        if (!cfg.showGreeting && !cfg.dateBelowClock && !cfg.shamsiDate && !cfg.lunarDate
-                && !cfg.topMenu && !getResources().getBoolean(R.bool.rtl_menu_bar)) {
+        if (!clockBesideButtons && !cfg.showGreeting && !cfg.dateBelowClock && !cfg.shamsiDate
+                && !cfg.lunarDate && !cfg.topMenu && !rtlMenuBar) {
             centerCompactHeader();
         }
         if (cfg.headerWhite) {
@@ -558,7 +564,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             ((TextView) findViewById(R.id.date)).setTextColor(Color.WHITE);
             findViewById(R.id.clockDivider).setBackgroundColor(Color.WHITE);
         }
-        if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
+        if (rtlMenuBar) {
             // Center Hebrew greetings over the numeric time, independent of a visible AM/PM label. The clock's row
             // is watched too: date_below_clock can move the whole row right under a wider date.
             View clock = findViewById(R.id.clock);
@@ -596,9 +602,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         lunarOffset = Lunar.offsetFor(cfg.lunarUtcOffset, Locale.getDefault());
         if (lunar) lunarDate.setVisibility(View.VISIBLE);
         greetingName = cfg.greetingName;
-        if (cfg.dateBelowClock) moveDateBelowClock();
-        if (cfg.dateBelowClock && cfg.iconOnlyButtons && !cfg.topMenu
-                && !getResources().getBoolean(R.bool.rtl_menu_bar)) {
+        if (cfg.dateBelowClock || clockBesideButtons) moveDateBelowClock(rtlMenuBar || clockBesideButtons);
+        if (clockBesideButtons) {
+            alignClockBesideButtons();
+        } else if (cfg.dateBelowClock && cfg.iconOnlyButtons && !cfg.topMenu && !rtlMenuBar) {
             alignDateBelowIconsWithClock();
         }
         if (shamsi) {
@@ -872,13 +879,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             ((TextView) btnSettings).setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_settings, 0, 0, 0);
             if (!iconOnlyButtons) makeIconOnly((TextView) btnSettings);
             btnSettings.setOnClickListener(v -> showTopMenu());
-            // The lone gear sits at the header's middle, not on its bottom line like the row of pills.
-            LinearLayout topButtons = findViewById(R.id.topButtons);
-            RelativeLayout.LayoutParams tlp = (RelativeLayout.LayoutParams) topButtons.getLayoutParams();
-            tlp.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
-            tlp.bottomMargin = 0;
-            topButtons.setLayoutParams(tlp);
-            topButtons.setGravity(Gravity.CENTER_VERTICAL);
+            if (!clockBesideButtons) {
+                // The lone gear sits at the header's middle.
+                LinearLayout topButtons = findViewById(R.id.topButtons);
+                RelativeLayout.LayoutParams tlp = (RelativeLayout.LayoutParams) topButtons.getLayoutParams();
+                tlp.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
+                tlp.bottomMargin = 0;
+                topButtons.setLayoutParams(tlp);
+                topButtons.setGravity(Gravity.CENTER_VERTICAL);
+            }
         }
         if (iconOnlyButtons) {
             if (cfg.wifiLabelWidth > 0) btnWifi.setMaxWidth(Math.round(cfg.wifiLabelWidth * density));
@@ -899,7 +908,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         // Keep focus on the top bar at its ends and at the top: Android's focus finder would otherwise
         // jump to a tile far below when there is nothing in that direction.
-        boolean rtlMenuBar = getResources().getBoolean(R.bool.rtl_menu_bar);
         View.OnKeyListener pillKeys = (v, keyCode, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (keyCode == KeyEvent.KEYCODE_DPAD_UP) return true;
@@ -2172,6 +2180,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             canvas.drawRect(0, 0, w, h, paint);
             glow = new BitmapDrawable(getResources(), bmp);
             glow.setGravity(Gravity.FILL);
+            glow.setAlpha(ambientDrawableAlpha);
             ambient.setBackground(glow);
         }
         // The default tint mode, SRC_IN, keeps the mask's alpha and takes the colour from the tint.
@@ -2496,10 +2505,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * date_below_clock: the date column moves to its own line under the clock, in the vertical LinearLayout that holds
-     * the clock's row, and the line between them goes. In Hebrew (rtl_menu_bar) the date and the clock's row sit right.
+     * Move the date column below the clock and hide the divider. The compact right-hand and Hebrew headers align
+     * the date and clock row to the right.
      */
-    private void moveDateBelowClock() {
+    private void moveDateBelowClock(boolean alignRight) {
         View column = (View) findViewById(R.id.date).getParent();
         View clockRow = (View) findViewById(R.id.clock).getParent();
         LinearLayout clockColumn = (LinearLayout) clockRow.getParent();
@@ -2509,8 +2518,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = Math.round(4 * density);
-        if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
-            // Date and clock flush right; the greeting stays left and follows the clock by translation.
+        if (alignRight) {
             lp.gravity = Gravity.RIGHT;
             ((LinearLayout.LayoutParams) clockRow.getLayoutParams()).gravity = Gravity.RIGHT;
         }
@@ -2523,9 +2531,33 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             LinearLayout.LayoutParams textLp = (LinearLayout.LayoutParams) text.getLayoutParams();
             textLp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
             // Keep each line where its own gravity put it (right in Hebrew) now that it no longer fills the column.
-            textLp.gravity = ((TextView) text).getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK;
+            textLp.gravity = alignRight ? Gravity.RIGHT
+                    : ((TextView) text).getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK;
             text.setLayoutParams(textLp);
         }
+    }
+
+    /** Align the clock and date next to the controls in the upper-right corner. */
+    private void alignClockBesideButtons() {
+        RelativeLayout.LayoutParams clockParams = (RelativeLayout.LayoutParams) clockBlock.getLayoutParams();
+        clockParams.setMarginEnd(Math.round(8 * density));
+        clockBlock.setLayoutParams(clockParams);
+        // Align the visible clock numerals with the top of the pill.
+        clockBlock.setTranslationY(-16 * density);
+        greeting.setGravity(Gravity.RIGHT);
+        ((LinearLayout) findViewById(R.id.clock).getParent()).setGravity(Gravity.RIGHT);
+
+        RelativeLayout.LayoutParams statsParams = (RelativeLayout.LayoutParams) stats.getLayoutParams();
+        statsParams.removeRule(RelativeLayout.ALIGN_START);
+        statsParams.addRule(RelativeLayout.ALIGN_END, R.id.leftBlock);
+        stats.setLayoutParams(statsParams);
+
+        View buttons = findViewById(R.id.topButtons);
+        RelativeLayout.LayoutParams buttonParams = (RelativeLayout.LayoutParams) buttons.getLayoutParams();
+        buttonParams.removeRule(RelativeLayout.ALIGN_BOTTOM);
+        buttonParams.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
+        buttonParams.bottomMargin = 0;
+        buttons.setLayoutParams(buttonParams);
     }
 
     /** Centre the one-row header when the greeting and extra date lines are absent (#2265). */
