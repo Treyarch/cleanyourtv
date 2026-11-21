@@ -623,6 +623,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         libraryExcludedApps = new HashSet<>(cfg.libraryExcludedApps);
 
         grid = findViewById(R.id.grid);
+        int wallpaperGridTop = getResources().getInteger(R.integer.wallpaper_grid_top_percent);
+        if (!singleRow && cfg.wallpaperEnabled && !cfg.wallpapers.isEmpty() && wallpaperGridTop > 0) {
+            reserveWallpaperSpace(wallpaperGridTop);
+        }
         rtlAppGrid = getResources().getBoolean(R.bool.rtl_app_grid);
         // Mirror only the app grid; the header and other locales keep their own layouts.
         // single_row: one span laid out sideways, so the same adapter, glass and dock band serve a scrolling row.
@@ -981,6 +985,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent()) && !openLibraryIfAsked(getIntent())) {
             openInputsIfAsked(getIntent());
         }
+    }
+
+    /** Keep the wallpaper above the app viewport visible even as the grid scrolls. */
+    private void reserveWallpaperSpace(int topPercent) {
+        View viewport = (View) grid.getParent();
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewport.getLayoutParams();
+        int headerGap = params.topMargin;
+        Rect bounds = new Rect();
+        root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            bounds.set(0, 0, viewport.getWidth(), viewport.getHeight());
+            root.offsetDescendantRectToMyCoords(viewport, bounds);
+            int headerBottom = bounds.top - params.topMargin;
+            int top = root.getHeight() * topPercent / 100;
+            int margin = Math.max(headerGap, top - headerBottom);
+            if (params.topMargin != margin) {
+                params.topMargin = margin;
+                viewport.setLayoutParams(params);
+            }
+        });
     }
 
     /**

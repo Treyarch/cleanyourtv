@@ -418,7 +418,7 @@
 
     <!-- The focused dock app's name in large type above the dock. false keeps only the glow, which leaves room
          for bigger tiles when rows_below_dock is 2 or 3. -->
-    <bool name="dock_title">true</bool>
+    <bool name="dock_title">false</bool>
 
     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
          shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
@@ -525,6 +525,9 @@
     <bool name="ambient_glow">true</bool>
     <!-- Ambient-glow strength over a wallpaper, as a percentage of the normal strength. -->
     <integer name="wallpaper_glow_opacity">60</integer>
+    <!-- Top edge of the scrolling app grid as a percentage of screen height when a wallpaper is shown.
+         0 uses the normal grid under the header. This TV's wallpaper artwork and text fill the upper half. -->
+    <integer name="wallpaper_grid_top_percent">50</integer>
     <!-- true: when the focus moves to an app of another colour, the ambient glow takes the new colour in one frame
          instead of dimming and fading back in. Each frame of that fade repaints the whole screen, about 40 per key
          press, which a slow GPU such as the Mali-G52 cannot keep up with. Can also be set with "glow_snap" in a
