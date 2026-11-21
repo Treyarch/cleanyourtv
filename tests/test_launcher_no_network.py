@@ -18,11 +18,11 @@ Two things make the gap worth a test rather than a review habit:
   permission it merges in is judged here as soon as someone adds it to the source manifest too.
 - **The rule erodes one switch at a time.** A Bluetooth or storage grant is small on its own and the
   promise is what the project is judged on, so the second half here is the permissions the launcher
-  declares at all: the five it ships (`ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` for the pill,
+  declares at all: `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` for the pill,
   `ACCESS_FINE_LOCATION` for the Wi-Fi name on Android 10+, `WRITE_SECURE_SETTINGS` for the remote-key
-  helper the install script grants, and YaOS's `ACCESS_TV_SOURCE` for its live TV app). A sixth is a
-  permission an owner's TV will be asked for, so it is a line in this file with its reason, not a
-  silent addition.
+  helper the install script grants, YaOS's `ACCESS_TV_SOURCE` for its live TV app, and
+  `READ_TV_LISTINGS` for this fork's opt-in Suggestions row. Any additional permission belongs here
+  with its reason.
 
 The third part is the code half of the same promise: no Java source in `launcher/` reaches for a
 socket, `java.net`, or a web view. `NET_CAPABILITY_INTERNET` is the one `INTERNET`-shaped name the
@@ -53,6 +53,7 @@ SHIPPED = {
     "android.permission.ACCESS_NETWORK_STATE",
     "android.permission.ACCESS_WIFI_STATE",
     "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.READ_TV_LISTINGS",
     "android.permission.WRITE_SECURE_SETTINGS",
     "yandex.tv.permission.ACCESS_TV_SOURCE",
 }

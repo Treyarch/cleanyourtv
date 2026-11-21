@@ -119,4 +119,8 @@
     <string name="race_race_short">CARRERA</string>
     <string name="last_opened">Abierta per última vegada %1$s</string>
     <string name="game_live">En direutu</string>
+    <string name="suggestions">Suxerencies</string>
+    <string name="suggestions_state">Suxerencies: %1$s</string>
+    <string name="suggestions_permission">Permite l’accesu a les llistes de TV nos permisos de l’aplicación pa ver les suxerencies.</string>
+    <string name="home_applications">Aplicaciones</string>
 </resources>

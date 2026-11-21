@@ -99,4 +99,8 @@
     <string name="clock_format_system">Systemowy</string>
     <string name="clock_format_12">12-godzinny</string>
     <string name="clock_format_24">24-godzinny</string>
+    <string name="suggestions">Sugestie</string>
+    <string name="suggestions_state">Sugestie: %1$s</string>
+    <string name="suggestions_permission">Aby zobaczyć sugestie, zezwól aplikacji na dostęp do programu telewizyjnego w ustawieniach uprawnień.</string>
+    <string name="home_applications">Aplikacje</string>
 </resources>

@@ -27,6 +27,7 @@ public final class LauncherSettingsActivity extends Activity {
     }
 
     static final String EXTRA_REORDER = "com.gathin.tvhome.extra.REORDER_FROM_SETTINGS";
+    private static final int REQUEST_SUGGESTIONS = 1;
     private SharedPreferences choices;
     private final TextView[] columnChoices = new TextView[4];
     private final TextView[] rowChoices = new TextView[4];
@@ -38,6 +39,7 @@ public final class LauncherSettingsActivity extends Activity {
     private TextView animationsChoice;
     private TextView advancedChoice;
     private TextView followThemeChoice;
+    private TextView suggestionsChoice;
     private TextView openOnStartChoice;
     private int columns;
     private int rowsBelowDock;
@@ -145,6 +147,16 @@ public final class LauncherSettingsActivity extends Activity {
                         .setPositiveButton(R.string.enable, (dialog, which) -> setAdvanced(true))
                         .setNegativeButton(android.R.string.cancel, null)
                         .show();
+            }
+        });
+        suggestionsChoice = findViewById(R.id.suggestionsChoice);
+        suggestionsChoice.setVisibility(config.dockRow && !config.singleRow ? View.VISIBLE : View.GONE);
+        suggestionsChoice.setOnClickListener(v -> {
+            if (Suggestions.enabled(this)) setSuggestions(false);
+            else if (checkSelfPermission(Suggestions.PERMISSION) == PackageManager.PERMISSION_GRANTED) {
+                setSuggestions(true);
+            } else {
+                requestPermissions(new String[]{Suggestions.PERMISSION}, REQUEST_SUGGESTIONS);
             }
         });
         openOnStartChoice = findViewById(R.id.openOnStartChoice);
@@ -292,6 +304,20 @@ public final class LauncherSettingsActivity extends Activity {
         refresh();
     }
 
+    private void setSuggestions(boolean enabled) {
+        choices.edit().putBoolean(Suggestions.KEY, enabled).apply();
+        changed();
+        refresh();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode != REQUEST_SUGGESTIONS || results.length == 0) return;
+        if (results[0] == PackageManager.PERMISSION_GRANTED) setSuggestions(true);
+        else Toast.makeText(this, R.string.suggestions_permission, Toast.LENGTH_LONG).show();
+    }
+
     private void refresh() {
         for (int i = 0; i < columnChoices.length; i++) {
             columnChoices[i].setSelected(columns == i + 4);
@@ -317,6 +343,8 @@ public final class LauncherSettingsActivity extends Activity {
                         : wallpaperCurrent != null ? wallpaperCurrent
                         : getString(R.string.wallpaper_theme_default)));
         openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
+        suggestionsChoice.setText(getString(R.string.suggestions_state,
+                getString(Suggestions.enabled(this) ? R.string.on : R.string.off)));
         followThemeChoice.setSelected(!hasOnTvChoices());
     }
 

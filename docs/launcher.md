@@ -61,10 +61,19 @@ The launcher's own page has these rows, top to bottom:
   Follow theme, or push the theme again.
 - **Animations** on or off, and **Advanced effects** (tile lift, icon zoom and smooth ambient-colour
   transitions; they may use more memory) once animations are on.
+- **Suggestions** in the Sony fork shows a row below the dock with app recommendations and
+  Continue watching entries. It starts off and asks for Android's TV listings permission when
+  turned on. The row appears when the dock has its own row above the app grid and at least one
+  visible app has shared a title. The Sony fork reads suggestions from Netflix, Prime Video,
+  Jellyfin, YouTube, Okoo, and france.tv. Suggestions follows **Apps per row**, and additional cards
+  are reachable with Left and Right. Cards show the app's thumbnail and playback progress when
+  available, with a title when artwork is missing. The network-enabled Sony build can load HTTPS
+  artwork from URLs published by apps. Jellyfin's **Landscape** image (type `Thumb`) is preferred when available.
+  Press OK on a card to open it in its app. The **Applications** heading marks the start of the app grid below the dock.
 - **Open on start**, only with `open_on_start_choice`: Off, or an app that opens instead of Home the first
   time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
-- **Follow theme (reset on-TV choices)**, which clears every choice above. Pushing or resetting a theme
-  clears them too.
+- **Follow theme (reset on-TV choices)** clears layout, appearance, and Open on start choices.
+  Pushing or resetting a theme clears layout and appearance choices too. Suggestions uses its own setting.
 - **Choose default home** opens Android's home picker, and **TV system settings** the TV's own settings
   page.
 

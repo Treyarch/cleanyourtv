@@ -79,7 +79,8 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent,
                                @NonNull RecyclerView.State state) {
         int pos = parent.getChildAdapterPosition(view);
-        if (pos >= 0 && (singleRow || pos < dockSize)) {
+        if (pos >= 0 && (singleRow || pos < dockSize)
+                && !(parent.getChildViewHolder(view) instanceof SuggestionsRow)) {
             outRect.top = (int) (6 * density);
             outRect.bottom = (int) (12 * density);
         }

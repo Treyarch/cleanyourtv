@@ -149,4 +149,8 @@
     <string name="clock_format_system">Sistema</string>
     <string name="clock_format_12">12 ore</string>
     <string name="clock_format_24">24 ore</string>
+    <string name="suggestions">Suggerimenti</string>
+    <string name="suggestions_state">Suggerimenti: %1$s</string>
+    <string name="suggestions_permission">Consenti l’accesso alla programmazione TV nelle autorizzazioni dell’app per vedere i suggerimenti.</string>
+    <string name="home_applications">Applicazioni</string>
 </resources>

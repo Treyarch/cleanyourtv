@@ -113,4 +113,8 @@
     <string name="clock_format_system">Sistem</string>
     <string name="clock_format_12">12 jam</string>
     <string name="clock_format_24">24 jam</string>
+    <string name="suggestions">Saran</string>
+    <string name="suggestions_state">Saran: %1$s</string>
+    <string name="suggestions_permission">Izinkan akses ke daftar acara TV di izin aplikasi untuk menampilkan saran.</string>
+    <string name="home_applications">Aplikasi</string>
 </resources>

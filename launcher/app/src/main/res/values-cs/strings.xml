@@ -112,4 +112,8 @@
     <string name="clock_format_system">Systém</string>
     <string name="clock_format_12">12hodinové</string>
     <string name="clock_format_24">24hodinové</string>
+    <string name="suggestions">Doporučení</string>
+    <string name="suggestions_state">Doporučení: %1$s</string>
+    <string name="suggestions_permission">Chcete-li zobrazit doporučení, povolte v oprávněních aplikace přístup k televiznímu programu.</string>
+    <string name="home_applications">Aplikace</string>
 </resources>

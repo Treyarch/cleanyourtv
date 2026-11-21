@@ -101,4 +101,8 @@
     <string name="clock_format_system">النظام</string>
     <string name="clock_format_12">12 ساعة</string>
     <string name="clock_format_24">24 ساعة</string>
+    <string name="suggestions">الاقتراحات</string>
+    <string name="suggestions_state">الاقتراحات: %1$s</string>
+    <string name="suggestions_permission">اسمح بالوصول إلى قوائم التلفزيون في أذونات التطبيق لعرض الاقتراحات.</string>
+    <string name="home_applications">التطبيقات</string>
 </resources>

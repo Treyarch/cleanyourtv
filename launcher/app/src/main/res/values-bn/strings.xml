@@ -102,4 +102,8 @@
     <string name="clock_format_system">সিস্টেম</string>
     <string name="clock_format_12">১২ ঘণ্টা</string>
     <string name="clock_format_24">২৪ ঘণ্টা</string>
+    <string name="suggestions">পরামর্শ</string>
+    <string name="suggestions_state">পরামর্শ: %1$s</string>
+    <string name="suggestions_permission">পরামর্শ দেখতে অ্যাপের অনুমতিতে টিভি তালিকায় অ্যাক্সেস দিন।</string>
+    <string name="home_applications">অ্যাপ</string>
 </resources>

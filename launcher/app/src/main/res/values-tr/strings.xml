@@ -97,4 +97,8 @@
     <string name="clock_format_system">Sistem</string>
     <string name="clock_format_12">12 saat</string>
     <string name="clock_format_24">24 saat</string>
+    <string name="suggestions">Öneriler</string>
+    <string name="suggestions_state">Öneriler: %1$s</string>
+    <string name="suggestions_permission">Önerileri görmek için uygulama izinlerinden TV program listelerine erişime izin verin.</string>
+    <string name="home_applications">Uygulamalar</string>
 </resources>

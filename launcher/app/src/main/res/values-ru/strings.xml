@@ -155,4 +155,8 @@
     <string name="clock_format_system">Системные</string>
     <string name="clock_format_12">12-часовой</string>
     <string name="clock_format_24">24-часовой</string>
+    <string name="suggestions">Рекомендации</string>
+    <string name="suggestions_state">Рекомендации: %1$s</string>
+    <string name="suggestions_permission">Чтобы видеть рекомендации, разрешите доступ к телепрограмме в настройках разрешений приложения.</string>
+    <string name="home_applications">Приложения</string>
 </resources>

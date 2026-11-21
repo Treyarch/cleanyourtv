@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="suggestion_media_apps" translatable="false">
+        <item>com.netflix.ninja</item>
+        <item>com.amazon.amazonvideo.livingroom</item>
+        <item>org.jellyfin.androidtv</item>
+        <item>com.google.android.youtube.tv</item>
+        <item>fr.francetv.zouzous</item>
+        <item>fr.francetv.pluzz</item>
+    </string-array>
+</resources>

@@ -151,4 +151,8 @@
     <string name="clock_format_system">系统</string>
     <string name="clock_format_12">12 小时制</string>
     <string name="clock_format_24">24 小时制</string>
+    <string name="suggestions">推荐</string>
+    <string name="suggestions_state">推荐：%1$s</string>
+    <string name="suggestions_permission">请在应用权限中允许访问电视节目列表，以显示推荐。</string>
+    <string name="home_applications">应用</string>
 </resources>

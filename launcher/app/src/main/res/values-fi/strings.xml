@@ -115,4 +115,8 @@
     <string name="clock_format_system">Järjestelmä</string>
     <string name="clock_format_12">12 tuntia</string>
     <string name="clock_format_24">24 tuntia</string>
+    <string name="suggestions">Ehdotukset</string>
+    <string name="suggestions_state">Ehdotukset: %1$s</string>
+    <string name="suggestions_permission">Salli TV-ohjelmatietojen käyttö sovelluksen käyttöoikeuksissa, jotta näet ehdotukset.</string>
+    <string name="home_applications">Sovellukset</string>
 </resources>

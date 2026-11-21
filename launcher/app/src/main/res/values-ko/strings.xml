@@ -151,4 +151,8 @@
     <string name="clock_format_system">시스템</string>
     <string name="clock_format_12">12시간</string>
     <string name="clock_format_24">24시간</string>
+    <string name="suggestions">추천</string>
+    <string name="suggestions_state">추천: %1$s</string>
+    <string name="suggestions_permission">추천을 표시하려면 앱 권한에서 TV 프로그램 목록에 대한 접근을 허용하세요.</string>
+    <string name="home_applications">애플리케이션</string>
 </resources>

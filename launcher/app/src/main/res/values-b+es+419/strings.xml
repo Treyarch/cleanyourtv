@@ -145,4 +145,8 @@
     <string name="race_countdown_hours">%1$dh %2$dm</string>
     <string name="race_countdown_days">%1$dd %2$dh</string>
     <string name="last_opened">Última apertura: %1$s</string>
+    <string name="suggestions">Sugerencias</string>
+    <string name="suggestions_state">Sugerencias: %1$s</string>
+    <string name="suggestions_permission">Permite el acceso a la programación de TV en los permisos de la app para ver las sugerencias.</string>
+    <string name="home_applications">Aplicaciones</string>
 </resources>

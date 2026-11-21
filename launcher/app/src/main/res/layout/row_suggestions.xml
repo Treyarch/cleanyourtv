@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/suggestions_section_gap"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/suggestionsHeading"
+        layout="@layout/home_section_heading" />
+
+    <HorizontalScrollView
+        android:id="@+id/suggestionsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:descendantFocusability="afterDescendants"
+        android:focusable="false"
+        android:paddingTop="@dimen/suggestions_card_padding"
+        android:paddingBottom="@dimen/suggestions_card_padding"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/suggestionsCards"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+</LinearLayout>

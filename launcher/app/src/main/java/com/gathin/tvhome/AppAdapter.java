@@ -32,6 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -46,7 +47,8 @@ import java.util.Set;
 /**
  * App tiles. The first {@link MainActivity#COLUMNS} positions are the pinned dock (favourites, fixed order,
  * then empty slots up to a full row, see {@link DockSlots}), then the module cards the owner chose to show
- * (by label), the rest is alphabetical.
+ * (by label), the rest is alphabetical. Suggestions and the library are full-width rows that do
+ * not take a place in the app order.
  */
 public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -61,6 +63,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         /** Hold OK on a tile: the activity shows the tile menu (move, remove from Home, app info). */
         void onTileLongPress(int position, View card);
         void onLibraryUp();
+        void onSuggestionFocused(View card, Drawable artwork);
+        void onSuggestionsExit(int keyCode, int column);
         /** A tile whose launch_actions entry is "input:<id>": switch to that TV input instead of opening an app. */
         void onOpenInput(String inputId);
     }
@@ -221,6 +225,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** Packages drawn from their icon and name even when they have a banner (config.xml icon_tiles). */
     private final Set<String> iconTiles;
     private final List<Entry> items = new ArrayList<>();
+    private List<Suggestions.Program> suggestions = Collections.emptyList();
+    private SuggestionArtwork suggestionArtwork;
+    private int suggestionsPosition = RecyclerView.NO_POSITION;
+    private static final int LIBRARY_VIEW = 1, SUGGESTIONS_VIEW = 2, APPLICATIONS_HEADING = 3;
 
     AppAdapter(Context ctx, TileListener listener, int dockSize, Config cfg) {
         this.ctx = ctx;
@@ -342,6 +350,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         items.clear();
         items.addAll(fresh);
+        suggestionsPosition = findSuggestionsPosition();
         notifyDataSetChanged();
     }
 
@@ -392,13 +401,27 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** Lets go of every tile and its artwork (Home is in the background and memory is short). */
     void clear() {
         items.clear();
+        suggestions = Collections.emptyList();
+        suggestionsPosition = RecyclerView.NO_POSITION;
         notifyDataSetChanged();
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == 1) {
+        if (viewType == SUGGESTIONS_VIEW) {
+            return new SuggestionsRow(parent, this, listener, dockSize,
+                    ctx.getResources().getBoolean(R.bool.rtl_app_grid));
+        }
+        if (viewType == APPLICATIONS_HEADING) {
+            TextView heading = (TextView) LayoutInflater.from(ctx).inflate(R.layout.home_section_heading, parent, false);
+            styleHeading(heading, parent, R.string.home_applications);
+            int gap = ctx.getResources().getDimensionPixelSize(R.dimen.applications_section_gap);
+            heading.getLayoutParams().height += gap;
+            heading.setPaddingRelative(heading.getPaddingStart(), gap, heading.getPaddingEnd(), 0);
+            return new RecyclerView.ViewHolder(heading) { };
+        }
+        if (viewType == LIBRARY_VIEW) {
             View row = LayoutInflater.from(ctx).inflate(R.layout.row_app_library, parent, false);
             View button = row.findViewById(R.id.btnLibrary);
             button.setOnClickListener(v -> listener.onLibraryRequested());
@@ -413,9 +436,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_app, parent, false);
         float density = parent.getResources().getDisplayMetrics().density;
-        int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
-        int inner = width - parent.getPaddingLeft() - parent.getPaddingRight();
-        int w = tileWidthPx(inner, parent.getHeight(), dockSize, rowsBelowDock, dockTitle, dockRow, density), h = tileHeightPx(w);
+        int inner = innerWidth(parent);
+        int w = tileWidthFor(parent), h = tileHeightPx(w);
         View card = v.findViewById(R.id.card);
         ViewGroup.LayoutParams cardLp = card.getLayoutParams();
         cardLp.width = w;
@@ -452,20 +474,57 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             View label = v.findViewById(R.id.label);
             label.setPadding(label.getPaddingLeft(), label.getPaddingTop(), label.getPaddingRight(), Math.round(4f * density));
         }
-        return new Holder(v, listener, animations, advancedEffects, reducedMotion, restNameAlpha, focusOvershoot);
+        return new Holder(v, this, listener);
+    }
+
+    int innerWidth(ViewGroup parent) {
+        int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
+        return width - parent.getPaddingLeft() - parent.getPaddingRight();
+    }
+
+    int tileWidthFor(ViewGroup parent) {
+        return tileWidthPx(innerWidth(parent), parent.getHeight(), dockSize, rowsBelowDock, dockTitle, dockRow,
+                parent.getResources().getDisplayMetrics().density);
+    }
+
+    void styleHeading(TextView heading, ViewGroup grid, int title) {
+        int inset = Math.max(0, (innerWidth(grid) / dockSize - tileWidthFor(grid)) / 2);
+        boolean rtl = ctx.getResources().getBoolean(R.bool.rtl_app_grid);
+        heading.setLayoutDirection(rtl ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
+        heading.setPaddingRelative(inset, 0, inset, 0);
+        heading.setText(title);
+        ViewCompat.setAccessibilityHeading(heading, true);
+    }
+
+    private boolean compactDock() { return dockRow && !singleRow && restNameAlpha == 0f; }
+
+    int dockTileHeight(int itemHeight, float density) {
+        return compactDock() ? itemHeight - Math.round(29f * density) : itemHeight;
+    }
+
+    int suggestionTopPadding(int cardHeight) {
+        float density = ctx.getResources().getDisplayMetrics().density;
+        float lift = advancedEffects ? 4f * density : 0f;
+        int zoomRoom = (int) Math.ceil(cardHeight * (focusScale() - 1f) / 2f + lift);
+        return Math.max(zoomRoom, ctx.getResources().getDimensionPixelSize(R.dimen.suggestions_card_padding));
     }
 
     @Override
     @SuppressWarnings("deprecation")
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (isLibraryAt(position)) return;
+        if (holder instanceof SuggestionsRow) {
+            ((SuggestionsRow) holder).bind(suggestions, suggestionArtwork);
+            return;
+        }
+        position = appPosition(position);
+        if (position == RecyclerView.NO_POSITION || isLibraryAt(position)) return;
         Holder h = (Holder) holder;
         Entry e = items.get(position);
         if (e.kind == Entry.EMPTY) {
             // A free dock slot keeps its place in the row and the band, but shows nothing and takes no focus.
             h.card.setVisibility(View.INVISIBLE);
             h.card.setFocusable(false);
-            h.name.setVisibility(View.INVISIBLE);
+            h.name.setVisibility(compactDock() ? View.GONE : View.INVISIBLE);
             h.banner.setImageDrawable(null);
             h.icon.setImageDrawable(null);
             h.card.setOnClickListener(null);
@@ -478,7 +537,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // The dock has no labels, unless always_show_names asks for them (DockDecoration then makes room in the band).
         // In a single row every tile is the dock's kind: the big title above names it.
         boolean dockKind = DockSlots.inDockRow(dockRow, singleRow, position, dockSize);
-        h.name.setVisibility(dockKind && restNameAlpha == 0f ? View.INVISIBLE : View.VISIBLE);
+        if (dockKind && restNameAlpha == 0f) h.name.setVisibility(compactDock() ? View.GONE : View.INVISIBLE);
+        else h.name.setVisibility(View.VISIBLE);
         h.inDock = dockKind;
         boolean focused = h.card.isFocused();   // a rebind after reload() can hit the focused tile
         h.name.setAlpha(focused ? 1f : restNameAlpha);
@@ -512,7 +572,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         h.card.setOnClickListener(v -> launch(e));
         h.card.setOnLongClickListener(v -> {
             if (tileMenu) {
-                int pos = h.getBindingAdapterPosition();
+                int pos = appPosition(h.getBindingAdapterPosition());
                 if (pos != RecyclerView.NO_POSITION) listener.onTileLongPress(pos, v);
                 return true;
             }
@@ -565,14 +625,86 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return items.size() + (showLibrary ? 1 : 0);
+        return adapterPosition(items.size()) + (showLibrary ? 1 : 0);
     }
 
     int appCount() { return items.size(); }
 
     boolean isLibraryAt(int position) { return showLibrary && position == items.size(); }
 
-    @Override public int getItemViewType(int position) { return isLibraryAt(position) ? 1 : 0; }
+    @Override public int getItemViewType(int position) {
+        if (isSuggestionsAt(position)) return SUGGESTIONS_VIEW;
+        if (isApplicationsHeadingAt(position)) return APPLICATIONS_HEADING;
+        return isLibraryAt(appPosition(position)) ? LIBRARY_VIEW : 0;
+    }
+
+    boolean isFullSpan(int position) {
+        return isSuggestionsAt(position) || isApplicationsHeadingAt(position) || isLibraryAt(appPosition(position));
+    }
+
+    int suggestionsPosition() { return suggestionsPosition; }
+
+    boolean isSuggestionsAt(int position) {
+        return position != RecyclerView.NO_POSITION && position == suggestionsPosition;
+    }
+
+    boolean hasApplicationsHeading() {
+        return dockRow && !singleRow && !reordering && items.size() > dockSize;
+    }
+
+    private boolean isApplicationsHeadingAt(int position) {
+        return hasApplicationsHeading() && position == dockSize + (suggestionsPosition == dockSize ? 1 : 0);
+    }
+
+    /** Translates the app order (including the library at its end) to RecyclerView positions. */
+    int adapterPosition(int appPosition) {
+        int offset = suggestionsPosition != RecyclerView.NO_POSITION && appPosition >= suggestionsPosition ? 1 : 0;
+        if (hasApplicationsHeading() && appPosition >= dockSize) offset++;
+        return appPosition + offset;
+    }
+
+    /** Section headings and Suggestions do not occupy a place in the app order. */
+    int appPosition(int adapterPosition) {
+        if (isSuggestionsAt(adapterPosition) || isApplicationsHeadingAt(adapterPosition)) return RecyclerView.NO_POSITION;
+        int offset = hasApplicationsHeading() && adapterPosition > dockSize ? 1 : 0;
+        return suggestionsPosition != RecyclerView.NO_POSITION && adapterPosition > suggestionsPosition
+                ? adapterPosition - offset - 1 : adapterPosition - offset;
+    }
+
+    Set<String> suggestionApps() {
+        Set<String> allowed = new HashSet<>(Arrays.asList(ctx.getResources().getStringArray(R.array.suggestion_media_apps)));
+        Set<String> packages = new HashSet<>();
+        for (Entry entry : items) {
+            if ((entry.kind == Entry.APP || entry.kind == Entry.CARD) && allowed.contains(entry.pkg)) {
+                packages.add(entry.pkg);
+            }
+        }
+        return packages;
+    }
+
+    void setSuggestions(List<Suggestions.Program> programs, SuggestionArtwork artwork) {
+        suggestionArtwork = artwork;
+        if (suggestions.equals(programs)) return;
+        suggestions = programs;
+        updateSuggestionsPosition();
+    }
+
+    private int findSuggestionsPosition() {
+        return !reordering && !suggestions.isEmpty() && !items.isEmpty()
+                ? Math.min(dockSize, items.size()) : RecyclerView.NO_POSITION;
+    }
+
+    private void updateSuggestionsPosition() {
+        int previous = suggestionsPosition;
+        suggestionsPosition = findSuggestionsPosition();
+        if (previous == RecyclerView.NO_POSITION && suggestionsPosition != RecyclerView.NO_POSITION) {
+            notifyItemInserted(suggestionsPosition);
+        } else if (previous != RecyclerView.NO_POSITION && suggestionsPosition == RecyclerView.NO_POSITION) {
+            notifyItemRemoved(previous);
+        } else if (suggestionsPosition != RecyclerView.NO_POSITION) {
+            notifyItemChanged(suggestionsPosition);
+        }
+    }
 
     boolean containsPackage(String pkg) {
         for (Entry entry : items) if (entry.pkg.equals(pkg)) return true;
@@ -581,6 +713,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public long getItemId(int position) {
+        if (isSuggestionsAt(position)) return Long.MIN_VALUE + 1;
+        if (isApplicationsHeadingAt(position)) return Long.MIN_VALUE + 2;
+        position = appPosition(position);
         return isLibraryAt(position) ? Long.MIN_VALUE : items.get(position).component.flattenToShortString().hashCode();
     }
 
@@ -600,9 +735,20 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return rank != null && rank < savedDocked;
     }
 
-    /** Reorder mode on or off; takes effect at the next reload() (empty dock slots are left out while on). */
+    /** Hide Suggestions during reorder. The next reload also leaves out the empty dock slots. */
     void setReordering(boolean on) {
+        if (reordering == on) return;
+        int before = sectionCount();
         reordering = on;
+        suggestionsPosition = findSuggestionsPosition();
+        int after = sectionCount();
+        int start = Math.min(dockSize, items.size());
+        if (before > after) notifyItemRangeRemoved(start, before - after);
+        if (after > before) notifyItemRangeInserted(start, after - before);
+    }
+
+    private int sectionCount() {
+        return (hasApplicationsHeading() ? 1 : 0) + (suggestionsPosition == RecyclerView.NO_POSITION ? 0 : 1);
     }
 
     boolean hasEmptySlots() {
@@ -850,7 +996,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return Math.max(0, Math.min(255, Math.round(v)));
     }
 
-    private static int vividColor(Drawable live) {
+    static int vividColor(Drawable live) {
         if (live == null) return 0xFF444444;
         // Draw a private copy: changing the bounds of the drawable an ImageView shows would blank the tile.
         Drawable d = live.getConstantState() != null ? live.getConstantState().newDrawable().mutate() : live;
@@ -900,6 +1046,51 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return 16f * density * Math.min(1f, tileWidthPx / (DESIGN_W_DP * density));
     }
 
+    static void styleCard(View card) {
+        final float density = card.getResources().getDisplayMetrics().density;
+        card.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius(view.getWidth(), density));
+            }
+        });
+        card.setClipToOutline(true);
+    }
+
+    void animateCardFocus(View card, ImageView artwork, boolean focused, boolean inDock) {
+        card.animate().cancel();
+        artwork.animate().cancel();
+        float scale = focused ? focusScale() : 1f;
+        if (!animations) {
+            card.setScaleX(1f);
+            card.setScaleY(1f);
+            card.setTranslationY(0f);
+            card.setTranslationZ(0f);
+            artwork.setScaleX(1f);
+            artwork.setScaleY(1f);
+            return;
+        }
+        float density = card.getResources().getDisplayMetrics().density;
+        float lift = focused && advancedEffects && !inDock ? -4f * density : 0f;
+        float z = focused && advancedEffects ? 8f * density : 0f;
+        if (reducedMotion) {
+            card.animate().scaleX(scale).scaleY(scale).translationY(lift).translationZ(z)
+                    .setDuration(focused ? Motion.REDUCED_MS : 60)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+            return;
+        }
+        card.animate().scaleX(scale).scaleY(scale).translationY(lift).translationZ(z)
+                .setDuration(advancedEffects ? (focused ? 220 : 170) : (focused ? 260 : 180))
+                .setInterpolator(focused && !focusOvershoot ? new DecelerateInterpolator(1.5f)
+                        : new OvershootInterpolator(focused ? (advancedEffects ? 0.7f : 1.6f) : 0f))
+                .withLayer().start();
+        if (advancedEffects) {
+            artwork.animate().scaleX(focused ? 1.035f : 1f).scaleY(focused ? 1.035f : 1f)
+                    .setDuration(280).start();
+        }
+    }
+
     static final class Holder extends RecyclerView.ViewHolder {
         final View card;
         /** item_app.xml's tile_bg: the dark card behind an icon tile, or behind a banner that has transparent parts. */
@@ -908,17 +1099,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         final ImageView icon;
         final TextView label;
         final TextView name;
-        final boolean animations;
-        final boolean advancedEffects;
-        final boolean reducedMotion;
-        /** Alpha of the name while the tile is not focused (always_show_names). */
-        final float restNameAlpha;
-        final boolean overshoot;
         /** A dock tile: it grows in place without advanced_effects' lift, which reads as off-centre in the band (#2135). */
         boolean inDock;
 
-        Holder(View v, TileListener listener, boolean animations, boolean advancedEffects,
-               boolean reducedMotion, float restNameAlpha, boolean overshoot) {
+        Holder(View v, AppAdapter adapter, TileListener listener) {
             super(v);
             card = v.findViewById(R.id.card);
             cardBackground = card.getBackground();
@@ -926,76 +1110,32 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             icon = v.findViewById(R.id.icon);
             label = v.findViewById(R.id.label);
             name = v.findViewById(R.id.name);
-            this.animations = animations;
-            this.advancedEffects = advancedEffects;
-            this.reducedMotion = reducedMotion;
-            this.restNameAlpha = restNameAlpha;
-            this.overshoot = overshoot;
-
             final float density = v.getResources().getDisplayMetrics().density;
-            card.setOutlineProvider(new ViewOutlineProvider() {
-                @Override
-                public void getOutline(View view, Outline outline) {
-                    // 16dp at the design width, scaled down with the tile so small tiles keep the same shape.
-                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius(view.getWidth(), density));
-                }
-            });
-            card.setClipToOutline(true);
+            styleCard(card);
 
             card.setOnKeyListener((view, keyCode, event) -> {
                 if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
                 if (keyCode != KeyEvent.KEYCODE_DPAD_UP && keyCode != KeyEvent.KEYCODE_DPAD_DOWN
                         && keyCode != KeyEvent.KEYCODE_DPAD_LEFT && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
-                int pos = getBindingAdapterPosition();
+                int pos = adapter.appPosition(getBindingAdapterPosition());
                 return listener != null && pos != RecyclerView.NO_POSITION && listener.onTileVerticalKey(pos, keyCode);
             });
 
             card.setOnFocusChangeListener((view, focused) -> {
-                view.animate().cancel();
-                banner.animate().cancel();
+                adapter.animateCardFocus(view, banner, focused, inDock);
                 name.animate().cancel();
-                float scale = !animations ? 1f : advancedEffects ? 1.12f : 1.10f;
-                float s = focused ? scale : 1f;
-                if (!animations) {
-                    view.setScaleX(1f);
-                    view.setScaleY(1f);
-                    view.setTranslationY(0f);
-                    view.setTranslationZ(0f);
-                    banner.setScaleX(1f);
-                    banner.setScaleY(1f);
-                    name.setAlpha(focused ? 1f : restNameAlpha);
+                float alpha = focused ? 1f : adapter.restNameAlpha;
+                if (!adapter.animations) {
+                    name.setAlpha(alpha);
                     name.setTranslationY(0f);
-                } else if (reducedMotion) {
-                    // A short zoom with no hardware layer: building a layer for so short an animation costs more
-                    // frames than it saves. The name just appears instead of fading.
-                    view.animate().scaleX(s).scaleY(s)
-                            .translationY(focused && advancedEffects && !inDock ? -4f * density : 0f)
-                            .translationZ(focused && advancedEffects ? 8f * density : 0f)
-                            .setDuration(focused ? Motion.REDUCED_MS : 60)
-                            .setInterpolator(new DecelerateInterpolator())
-                            .start();
-                    name.setAlpha(focused ? 1f : restNameAlpha);
-                    // Same place as the full motion's slide ends: the layout's -6dp is only its starting point, and
-                    // left there the name overlaps the zoomed tile.
-                    // Only on focus: snapping it back to -6dp while it fades out would jump it up over the tile.
+                } else if (adapter.reducedMotion) {
+                    name.setAlpha(alpha);
                     if (focused) name.setTranslationY(density * 4f);
                 } else {
-                    view.animate().scaleX(s).scaleY(s)
-                            .translationY(focused && advancedEffects && !inDock ? -4f * density : 0f)
-                            .translationZ(focused && advancedEffects ? 8f * density : 0f)
-                            .setDuration(advancedEffects ? (focused ? 220 : 170) : (focused ? 260 : 180))
-                            .setInterpolator(focused && !overshoot ? new DecelerateInterpolator(1.5f)
-                                    : new OvershootInterpolator(focused ? (advancedEffects ? 0.7f : 1.6f) : 0f))
-                            .withLayer().start();
-                    if (advancedEffects) {
-                        banner.animate().scaleX(focused ? 1.035f : 1f).scaleY(focused ? 1.035f : 1f)
-                                .setDuration(280).start();
-                    }
-                    name.animate().alpha(focused ? 1f : restNameAlpha)
-                            .translationY(focused ? density * 4f : -density * 6f)
+                    name.animate().alpha(alpha).translationY(focused ? density * 4f : -density * 6f)
                             .setDuration(220).start();
                 }
-                int pos = getBindingAdapterPosition();
+                int pos = adapter.appPosition(getBindingAdapterPosition());
                 if (focused && listener != null && pos != RecyclerView.NO_POSITION) {
                     listener.onTileFocused(pos, view);
                 }

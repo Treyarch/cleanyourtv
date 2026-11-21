@@ -114,4 +114,8 @@
     <string name="clock_format_system">System</string>
     <string name="clock_format_12">12 timer</string>
     <string name="clock_format_24">24 timer</string>
+    <string name="suggestions">Forslag</string>
+    <string name="suggestions_state">Forslag: %1$s</string>
+    <string name="suggestions_permission">Tillat tilgang til TV-programoversikter i appens tillatelser for å vise forslag.</string>
+    <string name="home_applications">Apper</string>
 </resources>
