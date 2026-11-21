@@ -2,6 +2,8 @@ plugins {
     id 'com.android.application'
 }
 
+def wallpaperFeed = providers.gradleProperty('launcherWallpaperFeed').getOrElse('false').toBoolean()
+
 android {
     namespace 'com.gathin.tvhome'
     compileSdk 34
@@ -15,6 +17,15 @@ android {
         targetSdk 34
         versionCode 15
         versionName '3.6'
+    }
+
+    sourceSets {
+        // Only personal builds include the network client and its permission.
+        main.java.srcDir(wallpaperFeed ? 'src/wallpaperFeed/java' : 'src/offline/java')
+        if (wallpaperFeed) {
+            debug.manifest.srcFile 'src/wallpaperFeed/AndroidManifest.xml'
+            release.manifest.srcFile 'src/wallpaperFeed/AndroidManifest.xml'
+        }
     }
 
     buildTypes {

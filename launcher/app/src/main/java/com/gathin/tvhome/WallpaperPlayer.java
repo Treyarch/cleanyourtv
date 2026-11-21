@@ -35,6 +35,7 @@ final class WallpaperPlayer {
     private final ImageView image;
     private final int backgroundColor;
     private final List<File> files;
+    private final WallpaperFeed feed;
     private final long interval;
     private final String order;
     private final SharedPreferences preferences;
@@ -66,6 +67,7 @@ final class WallpaperPlayer {
         this.root = root;
         backgroundColor = config.backgroundColor;
         files = new ArrayList<>(config.wallpapers);
+        feed = config.wallpaperFeed;
         interval = config.wallpaperRotationMinutes * 60_000L;
         bitmapConfig = config.wallpaperTrueColor ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
         // The dim is painted into the picture (decode), so no full-screen shade layer is drawn on every frame.
@@ -77,7 +79,7 @@ final class WallpaperPlayer {
         longitude = moods.isEmpty() ? "" : context.getString(R.string.longitude);
         // Playback state belongs to one collection. Changing the collection starts from its first
         // picture instead of resuming a filename that belonged to the previous one.
-        String collection = collectionKey(files);
+        String collection = feed == null ? collectionKey(files) : feed.key();
         if (!collection.equals(preferences.getString("collection", ""))) {
             preferences.edit().putString("collection", collection)
                     .remove("image").remove("changed").apply();
@@ -91,7 +93,7 @@ final class WallpaperPlayer {
         names = config.wallpaperCaptions && config.wallpaperEnabled && !files.isEmpty()
                 ? WallpaperCaptions.read(files.get(0).getParentFile()) : Collections.emptyMap();
         caption = names.isEmpty() ? null : makeCaption(context, root);
-        if (config.wallpaperEnabled && !files.isEmpty()) {
+        if (config.wallpaperEnabled && (feed != null || !files.isEmpty())) {
             root.addView(image, 0, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             showFirst();
@@ -166,6 +168,7 @@ final class WallpaperPlayer {
     }
 
     void update() {
+        if (active && !closed && feed != null) feed.refresh(this::useFeedWallpapers);
         if (!active || closed || loading || files.isEmpty()) return;
         String previous = preferences.getString("image", "");
         // A picture outside the time of day's group (the group changed) is replaced at once, not after the interval.
@@ -186,6 +189,11 @@ final class WallpaperPlayer {
                     if (bitmap != null) bitmap.recycle();
                     return;
                 }
+                if (!files.contains(next)) {
+                    if (bitmap != null) bitmap.recycle();
+                    update();
+                    return;
+                }
                 if (bitmap == null) {
                     files.remove(next);
                     Log.w("TvHome.Wallpaper", "Skipping unreadable image: " + next.getName());
@@ -201,6 +209,13 @@ final class WallpaperPlayer {
                 }
             });
         });
+    }
+
+    private void useFeedWallpapers(List<File> images) {
+        if (closed || files.equals(images)) return;
+        files.clear();
+        files.addAll(images);
+        update();
     }
 
     /**
