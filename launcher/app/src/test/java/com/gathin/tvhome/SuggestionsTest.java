@@ -6,8 +6,10 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -18,18 +20,34 @@ public class SuggestionsTest {
     @Rule public TemporaryFolder files = new TemporaryFolder();
 
     @Test public void sharesTheRowBetweenAppsInTheirPublishedOrder() {
-        assertEquals(Arrays.asList("next", "recommended", "featured", "episode"),
+        assertEquals(Arrays.asList("next", "recommended", "featured", "episode", "preview"),
                 Suggestions.interleave(Arrays.asList(
                         Arrays.asList("next", "episode", "preview"),
                         Collections.singletonList("recommended"),
-                        Collections.singletonList("featured")), 4));
+                        Collections.singletonList("featured"))));
+    }
+
+    @Test public void showsFiveRoundsWithOneCardPerAppInEachRound() {
+        int appCount = 6;
+        List<List<Integer>> feeds = new ArrayList<>();
+        for (int app = 0; app < appCount; app++) {
+            List<Integer> feed = new ArrayList<>();
+            for (int rank = 0; rank < 6; rank++) feed.add(rank * appCount + app);
+            feeds.add(feed);
+        }
+
+        List<Integer> suggestions = Suggestions.interleave(feeds);
+        assertEquals(30, suggestions.size());
+        for (int index = 0; index < suggestions.size(); index++) {
+            assertEquals(index, suggestions.get(index).intValue());
+        }
     }
 
     @Test public void skipsEmptyFeedsAndStopsWhenTheyRunOut() {
         assertEquals(Collections.singletonList("next"),
                 Suggestions.interleave(Arrays.asList(Collections.emptyList(),
-                        Collections.singletonList("next")), 12));
-        assertTrue(Suggestions.interleave(Collections.emptyList(), 12).isEmpty());
+                        Collections.singletonList("next"))));
+        assertTrue(Suggestions.interleave(Collections.emptyList()).isEmpty());
     }
 
     @Test public void progressIsScaledAndClampedToPlaybackBounds() {

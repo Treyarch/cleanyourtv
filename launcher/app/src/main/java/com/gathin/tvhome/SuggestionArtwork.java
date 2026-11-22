@@ -12,6 +12,7 @@ import android.util.LruCache;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Objects;
 
 /** Small images for the Suggestions row. All reads and decoding run off Home's UI thread. */
@@ -65,6 +66,22 @@ final class SuggestionArtwork {
 
     private Bitmap loadPublishedArtwork(Context context, Suggestions.Program program, String seriesLandscape,
                                         CancellationSignal cancel) {
+        if (!JellyfinArtwork.isJellyfin(program.pkg)) {
+            Bitmap poster = load(context, program.pkg, program.posterUri, cancel);
+            if (Objects.equals(program.posterUri, program.thumbnailUri)) return poster;
+            if (poster != null && poster.getWidth() > poster.getHeight()
+                    && !isNetflixPlaceholder(program.pkg, poster)) return poster;
+            Bitmap thumbnail = load(context, program.pkg, program.thumbnailUri, cancel);
+            if (thumbnail == null) return poster;
+            if (poster == null) return thumbnail;
+            if (isNetflixPlaceholder(program.pkg, thumbnail)) {
+                thumbnail.recycle();
+                return poster;
+            }
+            poster.recycle();
+            return thumbnail;
+        }
+
         String publishedThumb = JellyfinArtwork.thumb(program.pkg, program.posterUri);
         if (publishedThumb == null) publishedThumb = JellyfinArtwork.thumb(program.pkg, program.thumbnailUri);
         Bitmap image = Objects.equals(publishedThumb, seriesLandscape)
@@ -113,11 +130,22 @@ final class SuggestionArtwork {
 
     private Bitmap decodeArtwork(Context context, String pkg, String source, byte[] bytes) {
         Bitmap image = decode(bytes);
-        if (image != null && JellyfinArtwork.isProxy(pkg, Uri.parse(source)) && jellyfin.isPlaceholder(context, pkg, image)) {
+        if (image == null) return null;
+        if (JellyfinArtwork.isProxy(pkg, Uri.parse(source)) && jellyfin.isPlaceholder(context, pkg, image)) {
             image.recycle();
             return null;
         }
         return image;
+    }
+
+    private static boolean isNetflixPlaceholder(String pkg, Bitmap image) {
+        if (!"com.netflix.ninja".equals(pkg)) return false;
+        // Identify Netflix's gray N so actual artwork can take priority.
+        Bitmap sample = Bitmap.createScaledBitmap(image, 16, 16, true);
+        int[] pixels = new int[256];
+        sample.getPixels(pixels, 0, 16, 0, 0, 16, 16);
+        if (sample != image) sample.recycle();
+        return Arrays.hashCode(pixels) == -1154725536;
     }
 
     private static Bitmap decode(byte[] bytes) {

@@ -23,7 +23,7 @@ import java.util.Set;
 final class Suggestions {
     static final String KEY = "show_suggestions";
     static final String PERMISSION = "android.permission.READ_TV_LISTINGS";
-    static final int MAX_CARDS = 12;
+    private static final int MAX_CARDS_PER_APP = 5;
 
     private static final String[] COLUMNS = {
             PreviewPrograms.COLUMN_PACKAGE_NAME, PreviewPrograms.COLUMN_TITLE,
@@ -85,7 +85,7 @@ final class Suggestions {
                 packages, byApp, cancel);
         List<List<Program>> feeds = new ArrayList<>();
         for (Map<String, Program> feed : byApp.values()) feeds.add(new ArrayList<>(feed.values()));
-        return interleave(feeds, MAX_CARDS);
+        return interleave(feeds);
     }
 
     private static void readTable(Context context, Uri uri, String sort, Set<String> packages,
@@ -97,7 +97,7 @@ final class Suggestions {
                 String pkg = rows.getString(0);
                 if (!packages.contains(pkg)) continue;
                 Map<String, Program> feed = byApp.computeIfAbsent(pkg, ignored -> new LinkedHashMap<>());
-                if (feed.size() >= MAX_CARDS) continue;
+                if (feed.size() >= MAX_CARDS_PER_APP) continue;
                 String link = rows.getString(2);
                 if (TextUtils.isEmpty(link) || feed.containsKey(link)) continue;
                 String originalTitle = rows.getString(1);
@@ -123,16 +123,11 @@ final class Suggestions {
         return Math.max(1, (int) (PROGRESS_MAX * ((double) position / duration)));
     }
 
-    static <T> List<T> interleave(List<List<T>> feeds, int limit) {
-        List<T> result = new ArrayList<>(limit);
-        boolean found = true;
-        for (int rank = 0; rank < limit && found; rank++) {
-            found = false;
+    static <T> List<T> interleave(List<List<T>> feeds) {
+        List<T> result = new ArrayList<>(feeds.size() * MAX_CARDS_PER_APP);
+        for (int rank = 0; rank < MAX_CARDS_PER_APP; rank++) {
             for (List<T> feed : feeds) {
-                if (rank >= feed.size()) continue;
-                result.add(feed.get(rank));
-                if (result.size() == limit) return result;
-                found = true;
+                if (rank < feed.size()) result.add(feed.get(rank));
             }
         }
         return result;

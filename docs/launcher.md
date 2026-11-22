@@ -65,10 +65,12 @@ The launcher's own page has these rows, top to bottom:
   Continue watching entries. It starts off and asks for Android's TV listings permission when
   turned on. The row appears when the dock has its own row above the app grid and at least one
   visible app has shared a title. The Sony fork reads suggestions from Netflix, Prime Video,
-  Jellyfin, YouTube, Okoo, and france.tv. Suggestions follows **Apps per row**, and additional cards
-  are reachable with Left and Right. Cards show the app's thumbnail and playback progress when
-  available, with a title when artwork is missing. The network-enabled Sony build can load HTTPS
-  artwork from URLs published by apps. Jellyfin episodes use the series' **Landscape** image (type `Thumb`)
+  Jellyfin, YouTube, Okoo, and france.tv. It shows up to five cards per app, taking one from each
+  app per round. Suggestions follows **Apps per row**, and additional cards are reachable with
+  Left and Right. Cards prefer the app's wide poster art, with the published thumbnail or a title
+  as fallbacks, and show playback progress when available. Netflix's default poster can appear
+  when it is the only image supplied. The network-enabled Sony build can load HTTPS artwork from
+  URLs published by apps. Jellyfin episodes use the series' **Landscape** image (type `Thumb`)
   when available and fall back to episode artwork. Home keeps a small local cache of those series
   images so it can display them after a restart while Jellyfin is still loading.
   Press OK on a card to open it in its app. The **Applications** heading marks the start of the app grid below the dock.
