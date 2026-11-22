@@ -614,7 +614,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         try {
             ctx.startActivity(i);
-            if (cinematic) LastOpened.record(ctx, e.pkg);
+            boolean trackSuggestions = Suggestions.tracksApp(ctx, e.pkg);
+            if (cinematic || trackSuggestions) LastOpened.record(ctx, e.pkg, trackSuggestions);
             if (advancedEffects && !reducedMotion && ctx instanceof Activity) {
                 ((Activity) ctx).overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
             }
@@ -672,7 +673,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     Set<String> suggestionApps() {
-        Set<String> allowed = new HashSet<>(Arrays.asList(ctx.getResources().getStringArray(R.array.suggestion_media_apps)));
+        List<String> allowed = Suggestions.mediaApps(ctx);
         Set<String> packages = new HashSet<>();
         for (Entry entry : items) {
             if ((entry.kind == Entry.APP || entry.kind == Entry.CARD) && allowed.contains(entry.pkg)) {

@@ -83,6 +83,7 @@ final class SuggestionsRow extends RecyclerView.ViewHolder {
             card.setOnClickListener(v -> {
                 try {
                     context.startActivity(program.intent);
+                    Suggestions.recordOpen(context, program.pkg);
                 } catch (ActivityNotFoundException | SecurityException e) {
                     Toast.makeText(context, context.getString(R.string.cant_open, program.title),
                             Toast.LENGTH_SHORT).show();

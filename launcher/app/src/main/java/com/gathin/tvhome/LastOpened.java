@@ -5,26 +5,74 @@ import android.content.SharedPreferences;
 import android.text.format.DateUtils;
 
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
- * When an app was last opened from Home, for the cinematic shelf's "Last opened" line: the launcher notes the
- * time whenever it opens an app. No permission and nothing read from other apps, so an app started some other
- * way (a remote's own Netflix button) shows the last time Home opened it.
+ * Local launch history for the cinematic shelf and Suggestions. Suggestions keeps one count per day.
  */
 final class LastOpened {
     private static final String PREFS = "last_opened";
+    private static final String COUNTS_PREFIX = "suggestion_opens:";
+    private static final int WINDOW_DAYS = 30;
+    private static final long DAY_MILLIS = TimeUnit.DAYS.toMillis(1);
 
     private LastOpened() {
     }
 
     /** Notes that Home just opened this app. */
-    static void record(Context ctx, String pkg) {
-        prefs(ctx).edit().putLong(pkg, System.currentTimeMillis()).apply();
+    static void record(Context ctx, String pkg, boolean countForSuggestions) {
+        SharedPreferences prefs = prefs(ctx);
+        long now = System.currentTimeMillis();
+        SharedPreferences.Editor edit = prefs.edit().putLong(pkg, now);
+        if (countForSuggestions) {
+            String key = COUNTS_PREFIX + pkg;
+            edit.putString(key, countOpen(prefs.getString(key, ""), now));
+        }
+        edit.apply();
     }
 
     /** Milliseconds since the epoch, or 0 when Home never opened the app. */
     static long get(Context ctx, String pkg) {
         return pkg == null ? 0L : prefs(ctx).getLong(pkg, 0L);
+    }
+
+    static long recentOpens(Context ctx, String pkg, long now) {
+        return recentOpens(prefs(ctx).getString(COUNTS_PREFIX + pkg, ""), now);
+    }
+
+    static boolean recentlyUsed(long timestamp, long now) {
+        return timestamp > 0 && timestamp <= now && now / DAY_MILLIS - timestamp / DAY_MILLIS < WINDOW_DAYS;
+    }
+
+    static String countOpen(String history, long now) {
+        long today = now / DAY_MILLIS;
+        int[] counts = dailyCounts(history, today);
+        if (counts[0] < Integer.MAX_VALUE) counts[0]++;
+        StringBuilder saved = new StringBuilder().append(today);
+        for (int count : counts) saved.append(',').append(count);
+        return saved.toString();
+    }
+
+    static long recentOpens(String history, long now) {
+        long total = 0;
+        for (int count : dailyCounts(history, now / DAY_MILLIS)) total += count;
+        return total;
+    }
+
+    private static int[] dailyCounts(String history, long today) {
+        int[] counts = new int[WINDOW_DAYS];
+        if (history.isEmpty()) return counts;
+        String[] saved = history.split(",");
+        try {
+            // The first field is the newest day, followed by counts going backwards from that day.
+            long age = today - Long.parseLong(saved[0]);
+            if (age < 0 || age >= WINDOW_DAYS) return counts;
+            for (int i = 1; i < saved.length && age + i <= WINDOW_DAYS; i++) {
+                counts[(int) age + i - 1] = Math.max(0, Integer.parseInt(saved[i]));
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return counts;
     }
 
     /**
