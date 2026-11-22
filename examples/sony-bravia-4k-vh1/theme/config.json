@@ -1,0 +1,7 @@
+{
+  "wallpaper": true,
+  "wallpaper_feed_url": "https://meander.fr/assets/backgrounds/wallpaper.json",
+  "wallpaper_rotation_minutes": 10,
+  "wallpaper_order": "shuffle",
+  "wallpaper_dim": 45
+}
