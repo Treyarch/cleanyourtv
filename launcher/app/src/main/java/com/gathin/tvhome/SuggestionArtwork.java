@@ -14,37 +14,70 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
-/** Small in-memory images for the current Suggestions row. All reads and decoding run off Home's UI thread. */
+/** Small images for the Suggestions row. All reads and decoding run off Home's UI thread. */
 final class SuggestionArtwork {
     static final int MAX_IMAGE_BYTES = 3 * 1024 * 1024;
     private static final int MAX_IMAGE_EDGE = 480;
     private final JellyfinArtwork jellyfin = new JellyfinArtwork();
-    private final LruCache<String, Bitmap> cache = new LruCache<String, Bitmap>(8 * 1024 * 1024) {
-        @Override protected int sizeOf(String key, Bitmap image) { return image.getAllocationByteCount(); }
+    private final LruCache<String, CachedArtwork> cache = new LruCache<String, CachedArtwork>(8 * 1024 * 1024) {
+        @Override protected int sizeOf(String key, CachedArtwork art) { return art.image.getAllocationByteCount(); }
     };
 
+    private static final class CachedArtwork {
+        final Bitmap image;
+        final boolean fromSeries;
+
+        CachedArtwork(Bitmap image, boolean fromSeries) {
+            this.image = image;
+            this.fromSeries = fromSeries;
+        }
+    }
+
     Bitmap cached(Suggestions.Program program) {
-        return cache.get(key(program));
+        CachedArtwork art = cache.get(key(program));
+        return art == null ? null : art.image;
     }
 
     Bitmap load(Context context, Suggestions.Program program, CancellationSignal cancel) {
-        Bitmap image = cached(program);
-        if (image != null || cancel.isCanceled()) return image;
-        String landscape = JellyfinArtwork.thumb(program.pkg, program.posterUri);
-        if (landscape == null) landscape = JellyfinArtwork.thumb(program.pkg, program.thumbnailUri);
-        image = load(context, program.pkg, landscape, cancel);
-        if (image == null && program.jellyfinSeries != null && !cancel.isCanceled()) {
-            String series = JellyfinArtwork.seriesLandscape(context, program, cancel);
-            if (!Objects.equals(series, landscape)) image = load(context, program.pkg, series, cancel);
+        String key = key(program);
+        CachedArtwork previous = cache.get(key);
+        if (cancel.isCanceled()) return previous == null ? null : previous.image;
+        if (previous != null && (program.jellyfinSeries == null || previous.fromSeries)) return previous.image;
+
+        String seriesKey = JellyfinArtwork.seriesCacheKey(program);
+        Bitmap image = seriesKey == null ? null : decode(JellyfinLandscapeCache.read(context.getCacheDir(), seriesKey));
+        String seriesLandscape = null;
+        if (image == null && !cancel.isCanceled()) {
+            seriesLandscape = JellyfinArtwork.seriesLandscape(context, program, cancel);
+            byte[] bytes = readImage(context, program.pkg, seriesLandscape, cancel);
+            image = decodeArtwork(context, program.pkg, seriesLandscape, bytes);
+            if (image != null && seriesKey != null && !cancel.isCanceled()) {
+                JellyfinLandscapeCache.write(context.getCacheDir(), seriesKey, bytes);
+            }
         }
-        if (image == null && !Objects.equals(landscape, program.thumbnailUri)) {
+        boolean fromSeries = image != null;
+        // Keep a fallback on screen, and retry the series lookup on return to Home after Jellyfin signs in.
+        if (!fromSeries && previous != null) return previous.image;
+        if (image == null) image = loadPublishedArtwork(context, program, seriesLandscape, cancel);
+        if (image != null && !cancel.isCanceled()) cache.put(key, new CachedArtwork(image, fromSeries));
+        return image;
+    }
+
+    private Bitmap loadPublishedArtwork(Context context, Suggestions.Program program, String seriesLandscape,
+                                        CancellationSignal cancel) {
+        String publishedThumb = JellyfinArtwork.thumb(program.pkg, program.posterUri);
+        if (publishedThumb == null) publishedThumb = JellyfinArtwork.thumb(program.pkg, program.thumbnailUri);
+        Bitmap image = Objects.equals(publishedThumb, seriesLandscape)
+                ? null : load(context, program.pkg, publishedThumb, cancel);
+        if (image == null && !Objects.equals(publishedThumb, program.thumbnailUri)
+                && !Objects.equals(seriesLandscape, program.thumbnailUri)) {
             image = load(context, program.pkg, program.thumbnailUri, cancel);
         }
-        if (image == null && !Objects.equals(landscape, program.posterUri)
-                && !Objects.equals(program.thumbnailUri, program.posterUri)) {
+        if (image == null && !Objects.equals(publishedThumb, program.posterUri)
+                && !Objects.equals(program.thumbnailUri, program.posterUri)
+                && !Objects.equals(seriesLandscape, program.posterUri)) {
             image = load(context, program.pkg, program.posterUri, cancel);
         }
-        if (image != null && !cancel.isCanceled()) cache.put(key(program), image);
         return image;
     }
 
@@ -55,6 +88,10 @@ final class SuggestionArtwork {
     }
 
     private Bitmap load(Context context, String pkg, String source, CancellationSignal cancel) {
+        return decodeArtwork(context, pkg, source, readImage(context, pkg, source, cancel));
+    }
+
+    private static byte[] readImage(Context context, String pkg, String source, CancellationSignal cancel) {
         if (source == null || source.isEmpty() || cancel.isCanceled()) return null;
         Uri uri = Uri.parse(source);
         try {
@@ -68,23 +105,32 @@ final class SuggestionArtwork {
                 }
             }
             if (bytes == null || cancel.isCanceled()) return null;
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
-            if (options.outWidth <= 0 || options.outHeight <= 0) return null;
-            int edge = Math.max(options.outWidth, options.outHeight);
-            options.inSampleSize = 1;
-            while (edge / options.inSampleSize > MAX_IMAGE_EDGE) options.inSampleSize *= 2;
-            options.inJustDecodeBounds = false;
-            Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
-            if (image != null && JellyfinArtwork.isProxy(pkg, uri) && jellyfin.isPlaceholder(context, pkg, image)) {
-                image.recycle();
-                return null;
-            }
-            return image;
+            return bytes;
         } catch (IOException | IllegalArgumentException | SecurityException ignored) {
             return null;
         }
+    }
+
+    private Bitmap decodeArtwork(Context context, String pkg, String source, byte[] bytes) {
+        Bitmap image = decode(bytes);
+        if (image != null && JellyfinArtwork.isProxy(pkg, Uri.parse(source)) && jellyfin.isPlaceholder(context, pkg, image)) {
+            image.recycle();
+            return null;
+        }
+        return image;
+    }
+
+    private static Bitmap decode(byte[] bytes) {
+        if (bytes == null) return null;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+        if (options.outWidth <= 0 || options.outHeight <= 0) return null;
+        int edge = Math.max(options.outWidth, options.outHeight);
+        options.inSampleSize = 1;
+        while (edge / options.inSampleSize > MAX_IMAGE_EDGE) options.inSampleSize *= 2;
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
     }
 
     private static boolean isAppArtwork(Context context, String pkg, Uri uri) {

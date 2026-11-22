@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.CancellationSignal;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 /** Requests Jellyfin's Landscape (Thumb) via the same image proxy that published its poster. */
 final class JellyfinArtwork {
     private static final Pattern IMAGE_PATH = Pattern.compile(
-            "(?i)(.*/Items/[0-9a-f-]{32,36}/Images/)(?:Primary|Backdrop|Thumb)(?:/[0-9]+)?");
+            "(?i)(.*)(/Items/[0-9a-f-]{32,36}/Images/)(?:Primary|Backdrop|Thumb)(?:/[0-9]+)?");
     private static final int SAMPLE = 16;
     private final Map<String, int[]> placeholders = new HashMap<>();
 
@@ -37,17 +38,12 @@ final class JellyfinArtwork {
     }
 
     static String thumb(String pkg, String poster) {
-        if (poster == null) return null;
-        Uri proxy = Uri.parse(poster);
-        if (!isProxy(pkg, proxy)) return null;
-        String source = proxy.getQueryParameter("src");
-        if (source == null) return null;
-        Uri image = Uri.parse(source);
-        if (image.getHost() == null
-                || (!"http".equalsIgnoreCase(image.getScheme()) && !"https".equalsIgnoreCase(image.getScheme()))) return null;
+        Uri image = proxiedImage(pkg, poster);
+        if (image == null) return null;
         String path = thumbPath(image.getEncodedPath());
         if (path == null) return null;
         if (path.equals(image.getEncodedPath())) return poster;
+        Uri proxy = Uri.parse(poster);
         Uri.Builder thumb = image.buildUpon().encodedPath(path).clearQuery();
         for (String name : image.getQueryParameterNames()) {
             if ("tag".equals(name) || "width".equals(name) || "height".equals(name)
@@ -64,13 +60,49 @@ final class JellyfinArtwork {
     static String thumbPath(String path) {
         if (path == null) return null;
         Matcher match = IMAGE_PATH.matcher(path);
-        return match.matches() ? match.group(1) + "Thumb" : null;
+        return match.matches() ? match.group(1) + match.group(2) + "Thumb" : null;
+    }
+
+    private static Uri proxiedImage(String pkg, String source) {
+        if (source == null) return null;
+        Uri proxy = Uri.parse(source);
+        if (!isProxy(pkg, proxy)) return null;
+        String target = proxy.getQueryParameter("src");
+        if (target == null) return null;
+        Uri image = Uri.parse(target);
+        if (image.getHost() == null
+                || (!"http".equalsIgnoreCase(image.getScheme()) && !"https".equalsIgnoreCase(image.getScheme()))) return null;
+        return image;
+    }
+
+    private static String imageServer(String pkg, String source) {
+        Uri image = proxiedImage(pkg, source);
+        if (image == null || image.getEncodedPath() == null) return null;
+        Matcher path = IMAGE_PATH.matcher(image.getEncodedPath());
+        if (!path.matches()) return null;
+        String scheme = image.getScheme().toLowerCase(Locale.ROOT);
+        int port = image.getPort();
+        if (port == -1) port = "https".equals(scheme) ? 443 : 80;
+        return scheme + '\n' + image.getHost().toLowerCase(Locale.ROOT) + '\n' + port + '\n' + path.group(1);
+    }
+
+    private static String programServer(Suggestions.Program program) {
+        String server = imageServer(program.pkg, program.posterUri);
+        return server != null ? server : imageServer(program.pkg, program.thumbnailUri);
+    }
+
+    static String seriesCacheKey(Suggestions.Program program) {
+        String series = program.jellyfinSeries;
+        if (series == null || series.isEmpty() || series.length() > 300) return null;
+        String server = programServer(program);
+        return server == null ? null : program.pkg + '\n' + server + '\n' + series.toLowerCase(Locale.ROOT);
     }
 
     /** The episode's published poster may be a still. Ask Jellyfin's search provider for the parent series. */
     static String seriesLandscape(Context context, Suggestions.Program program, CancellationSignal cancel) {
         String series = program.jellyfinSeries;
-        if (series == null || series.length() > 300 || cancel.isCanceled()) return null;
+        if (series == null || series.isEmpty() || series.length() > 300 || cancel.isCanceled()) return null;
+        String server = programServer(program);
         String authority = program.pkg + ".content";
         ProviderInfo provider = context.getPackageManager().resolveContentProvider(authority, 0);
         if (provider == null || !program.pkg.equals(provider.packageName)) return null;
@@ -90,7 +122,8 @@ final class JellyfinArtwork {
                 if (item == null || item.equalsIgnoreCase(episodeId)
                         || !series.equalsIgnoreCase(results.getString(titleCol))) continue;
                 String candidate = thumb(program.pkg, results.getString(imageCol));
-                if (candidate == null) continue;
+                if (candidate == null
+                        || (server != null && !server.equals(imageServer(program.pkg, candidate)))) continue;
                 if (landscape != null && !landscape.equals(candidate)) return null;
                 landscape = candidate;
             }

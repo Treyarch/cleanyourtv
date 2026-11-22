@@ -68,7 +68,9 @@ The launcher's own page has these rows, top to bottom:
   Jellyfin, YouTube, Okoo, and france.tv. Suggestions follows **Apps per row**, and additional cards
   are reachable with Left and Right. Cards show the app's thumbnail and playback progress when
   available, with a title when artwork is missing. The network-enabled Sony build can load HTTPS
-  artwork from URLs published by apps. Jellyfin's **Landscape** image (type `Thumb`) is preferred when available.
+  artwork from URLs published by apps. Jellyfin episodes use the series' **Landscape** image (type `Thumb`)
+  when available and fall back to episode artwork. Home keeps a small local cache of those series
+  images so it can display them after a restart while Jellyfin is still loading.
   Press OK on a card to open it in its app. The **Applications** heading marks the start of the app grid below the dock.
 - **Open on start**, only with `open_on_start_choice`: Off, or an app that opens instead of Home the first
   time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.

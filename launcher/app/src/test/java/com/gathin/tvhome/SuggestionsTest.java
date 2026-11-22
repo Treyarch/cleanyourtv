@@ -1,15 +1,22 @@
 package com.gathin.tvhome;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class SuggestionsTest {
+    @Rule public TemporaryFolder files = new TemporaryFolder();
+
     @Test public void sharesTheRowBetweenAppsInTheirPublishedOrder() {
         assertEquals(Arrays.asList("next", "recommended", "featured", "episode"),
                 Suggestions.interleave(Arrays.asList(
@@ -55,5 +62,26 @@ public class SuggestionsTest {
         assertEquals(item + "Thumb", JellyfinArtwork.thumbPath(item + "Thumb"));
         assertNull(JellyfinArtwork.thumbPath("/Items/movie/Images/Primary"));
         assertNull(JellyfinArtwork.thumbPath("/assets/Primary"));
+    }
+
+    @Test public void jellyfinLandscapeCanBeReadFromDiskAndIsScopedToItsServer() throws IOException {
+        File cache = files.newFolder();
+        String series = "server-a\nseries";
+        byte[] landscape = {1, 2, 3};
+
+        JellyfinLandscapeCache.write(cache, series, landscape);
+
+        assertArrayEquals(landscape, JellyfinLandscapeCache.read(new File(cache.getPath()), series));
+        assertNull(JellyfinLandscapeCache.read(cache, "server-b\nseries"));
+    }
+
+    @Test public void jellyfinLandscapeCacheKeepsTheNewestImagesWithinItsByteBudget() throws IOException {
+        File cache = files.newFolder();
+        byte[] landscape = new byte[SuggestionArtwork.MAX_IMAGE_BYTES];
+        for (int i = 0; i < 3; i++) JellyfinLandscapeCache.write(cache, "series-" + i, landscape);
+
+        assertArrayEquals(landscape, JellyfinLandscapeCache.read(cache, "series-2"));
+        File[] images = new File(cache, "jellyfin-landscapes").listFiles();
+        assertEquals(2, images.length);
     }
 }
