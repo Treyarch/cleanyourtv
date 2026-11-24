@@ -131,4 +131,5 @@
     <string name="suggestions_permission">Cho phép truy cập danh sách chương trình TV trong quyền của ứng dụng để xem đề xuất.</string>
     <string name="home_applications">Ứng dụng</string>
     <string name="christmas_snow_state">Tuyết Giáng sinh: %1$s</string>
+    <string name="spring_petals_state">Cánh hoa mùa xuân: %1$s</string>
 </resources>

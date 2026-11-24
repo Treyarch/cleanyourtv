@@ -124,4 +124,5 @@
     <string name="suggestions_permission">Permite l’accesu a les llistes de TV nos permisos de l’aplicación pa ver les suxerencies.</string>
     <string name="home_applications">Aplicaciones</string>
     <string name="christmas_snow_state">Nieve de Nadal: %1$s</string>
+    <string name="spring_petals_state">Pétalos de primavera: %1$s</string>
 </resources>

@@ -43,6 +43,7 @@ final class Config {
     static final String ROWS_BELOW_DOCK_KEY = "rows_below_dock";
     static final String WALLPAPER_CHOICE_KEY = "wallpaper_choice";
     static final String CHRISTMAS_SNOW_KEY = "christmas_snow";
+    static final String SPRING_PETALS_KEY = "spring_petals";
     static final String DOCK_OPACITY_KEY = "dock_opacity";
     static final String CLOCK_FORMAT_KEY = "clock_format";
     /**
@@ -214,6 +215,7 @@ final class Config {
     final int wallpaperRotationMinutes;
     final int wallpaperDim;
     final boolean christmasSnow;
+    final boolean springPetals;
     /** The dock band's opacity in percent (config.json dock_opacity, 30-100): below 100 the wallpaper shows through. */
     final int dockOpacity;
     /**
@@ -295,7 +297,8 @@ final class Config {
                    boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean bootToLiveTv, boolean openOnStartChoice, boolean dockTitle, boolean dockRow, boolean topMenu, boolean launcherSettingsButton, boolean reorderButton, boolean showNetworkPill, boolean showInputsPill, boolean iconOnlyButtons, boolean iconOnlyInputs, boolean libraryButton, boolean showLibraryPill, int wifiLabelWidth, boolean alwaysShowNames, boolean wallpaperTrueColor, boolean focusOvershoot, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, String gameDay, boolean appLibrary, boolean appLibrarySelection, boolean libraryOkOpens, boolean uniformTiles, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean restoreKeyServices, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
-                   WallpaperFeed wallpaperFeed, int wallpaperRotationMinutes, int wallpaperDim, boolean christmasSnow, int dockOpacity, String wallpaperOrder, boolean overlayApplied,
+                   WallpaperFeed wallpaperFeed, int wallpaperRotationMinutes, int wallpaperDim, boolean christmasSnow,
+                   boolean springPetals, int dockOpacity, String wallpaperOrder, boolean overlayApplied,
                    Festival festival, int[] inputKeycodes, List<String> appKeys, String stockHomeRedirect,
                    List<RaceWeekend.Race> raceCalendar, boolean cinematicHome, boolean ambientGlow, boolean appGlow, boolean fadeRows, int homeIdleClockMinutes,
                    boolean keyFilter, boolean dockGlass, String glowStyle, boolean wallpaperCaptions,
@@ -381,6 +384,7 @@ final class Config {
         this.wallpaperRotationMinutes = wallpaperRotationMinutes;
         this.wallpaperDim = wallpaperDim;
         this.christmasSnow = christmasSnow;
+        this.springPetals = springPetals;
         this.dockOpacity = dockOpacity;
         this.wallpaperOrder = wallpaperOrder;
         this.overlayApplied = overlayApplied;
@@ -499,6 +503,7 @@ final class Config {
         boolean focusOvershoot = res.getBoolean(R.bool.focus_overshoot);
         boolean wallpaperCaptions = res.getBoolean(R.bool.wallpaper_captions);
         boolean christmasSnow = res.getBoolean(R.bool.christmas_snow);
+        boolean springPetals = res.getBoolean(R.bool.spring_petals);
         boolean tileMenu = res.getBoolean(R.bool.tile_menu);
         String vpn = res.getString(R.string.vpn_app).trim();
         boolean homeSettings = res.getBoolean(R.bool.show_home_settings_shortcut);
@@ -617,6 +622,7 @@ final class Config {
             focusOvershoot = bool(json, "focus_overshoot", focusOvershoot);
             wallpaperCaptions = bool(json, "wallpaper_captions", wallpaperCaptions);
             christmasSnow = bool(json, CHRISTMAS_SNOW_KEY, christmasSnow);
+            springPetals = bool(json, SPRING_PETALS_KEY, springPetals);
             tileMenu = bool(json, "tile_menu", tileMenu);
             vpn = string(json, "vpn_app", vpn);
             homeSettings = bool(json, "show_home_settings_shortcut", homeSettings);
@@ -690,6 +696,7 @@ final class Config {
         animations = choices.getBoolean("animations", animations);
         advancedEffects = choices.getBoolean("advanced_effects", advancedEffects);
         christmasSnow = choices.getBoolean(CHRISTMAS_SNOW_KEY, christmasSnow);
+        springPetals = choices.getBoolean(SPRING_PETALS_KEY, springPetals);
         File wallpaper = dir != null ? new File(dir, WALLPAPER_NAME) : null;
         if (wallpaper != null && !(wallpaper.isFile() && wallpaper.length() > 0)) wallpaper = null;
         // A theme can also switch the wallpaper off while the file is still there.
@@ -742,7 +749,7 @@ final class Config {
                 iconOnlyButtons, iconOnlyInputs, libraryButton, showLibraryPill, wifiLabelWidth, alwaysShowNames, wallpaperTrueColor, focusOvershoot,
                 vpn, homeSettings, showStats, gameDay, library, librarySelection, libraryOkOpens, uniformTiles, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, restoreKeyServices, wallpaperEnabled, wallpaper,
-                wallpapers, wallpaperFeed, rotationMinutes, wallpaperDim, christmasSnow, dockOpacity, wallpaperOrder, applied, festival, inputKeycodes, appKeys, stockHomeRedirect,
+                wallpapers, wallpaperFeed, rotationMinutes, wallpaperDim, christmasSnow, springPetals, dockOpacity, wallpaperOrder, applied, festival, inputKeycodes, appKeys, stockHomeRedirect,
                 json == null ? Collections.emptyList() : raceCalendar(json), cinematic, ambientGlow, appGlow, fadeRows,
                 Math.max(0, idleClockMinutes), keyFilter, dockGlass, glowStyle, wallpaperCaptions, handleViewInputs, tileMenu, dockEvenPadding,
                 dockBand, cinematicDots, cinematicWhiteFocus, wifiStatusColor, cinematicScrim, cinematicArt, wallpaperMoods, gamepadPassthrough,
@@ -794,12 +801,13 @@ final class Config {
             SharedPreferences.Editor editor = choices.edit();
             if (!"absent".equals(token)) editor.remove("columns").remove("animations")
                     .remove("advanced_effects").remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY)
-                    .remove(CHRISTMAS_SNOW_KEY).remove(DOCK_OPACITY_KEY).remove(CLOCK_FORMAT_KEY);
+                    .remove(CHRISTMAS_SNOW_KEY).remove(SPRING_PETALS_KEY).remove(DOCK_OPACITY_KEY)
+                    .remove(CLOCK_FORMAT_KEY);
             editor.putString(THEME_SIGNATURE_KEY, signature).commit();
         } else if (!seen.equals(signature)) {
             choices.edit().remove("columns").remove("animations").remove("advanced_effects")
                     .remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY).remove(DOCK_OPACITY_KEY)
-                    .remove(CHRISTMAS_SNOW_KEY).remove(CLOCK_FORMAT_KEY)
+                    .remove(CHRISTMAS_SNOW_KEY).remove(SPRING_PETALS_KEY).remove(CLOCK_FORMAT_KEY)
                     .putString(THEME_SIGNATURE_KEY, signature).commit();
         }
     }

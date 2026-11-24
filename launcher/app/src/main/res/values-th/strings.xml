@@ -76,4 +76,5 @@
     <string name="suggestions_permission">อนุญาตให้เข้าถึงรายการทีวีในสิทธิ์ของแอปเพื่อแสดงคำแนะนำ</string>
     <string name="home_applications">แอปพลิเคชัน</string>
     <string name="christmas_snow_state">หิมะคริสต์มาส: %1$s</string>
+    <string name="spring_petals_state">กลีบดอกไม้ฤดูใบไม้ผลิ: %1$s</string>
 </resources>

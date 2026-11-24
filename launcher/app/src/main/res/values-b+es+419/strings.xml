@@ -150,4 +150,5 @@
     <string name="suggestions_permission">Permite el acceso a la programación de TV en los permisos de la app para ver las sugerencias.</string>
     <string name="home_applications">Aplicaciones</string>
     <string name="christmas_snow_state">Nieve navideña: %1$s</string>
+    <string name="spring_petals_state">Pétalos de primavera: %1$s</string>
 </resources>

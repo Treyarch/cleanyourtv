@@ -403,6 +403,9 @@
 
     <!-- Falling snow behind the Home controls. A theme can also set "christmas_snow": true. -->
     <bool name="christmas_snow">false</bool>
+
+    <!-- Falling cherry blossom petals behind the Home controls. A theme can also set "spring_petals": true. -->
+    <bool name="spring_petals">false</bool>
     <!-- Rotating wallpapers grouped by the time of day, as JSON: {"morning": [file names], "evening": [...],
          "night": [...]}. While set, the rotation picks only from the group that fits now: morning from sunrise to
          noon, evening until half an hour after sunset, night the rest, with the sun at latitude and longitude (07:00

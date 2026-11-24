@@ -104,4 +104,5 @@
     <string name="suggestions_permission">Aby zobaczyć sugestie, zezwól aplikacji na dostęp do programu telewizyjnego w ustawieniach uprawnień.</string>
     <string name="home_applications">Aplikacje</string>
     <string name="christmas_snow_state">Świąteczny śnieg: %1$s</string>
+    <string name="spring_petals_state">Wiosenne płatki: %1$s</string>
 </resources>

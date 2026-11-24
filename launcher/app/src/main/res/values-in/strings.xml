@@ -118,4 +118,5 @@
     <string name="suggestions_permission">Izinkan akses ke daftar acara TV di izin aplikasi untuk menampilkan saran.</string>
     <string name="home_applications">Aplikasi</string>
     <string name="christmas_snow_state">Salju Natal: %1$s</string>
+    <string name="spring_petals_state">Kelopak bunga musim semi: %1$s</string>
 </resources>

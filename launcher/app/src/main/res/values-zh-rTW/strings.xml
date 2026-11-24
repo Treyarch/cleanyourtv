@@ -102,4 +102,5 @@
     <string name="suggestions_permission">請在應用程式權限中允許存取電視節目表，以顯示推薦。</string>
     <string name="home_applications">應用程式</string>
     <string name="christmas_snow_state">聖誕飄雪：%1$s</string>
+    <string name="spring_petals_state">春日落櫻：%1$s</string>
 </resources>

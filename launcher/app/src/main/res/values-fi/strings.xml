@@ -120,4 +120,5 @@
     <string name="suggestions_permission">Salli TV-ohjelmatietojen käyttö sovelluksen käyttöoikeuksissa, jotta näet ehdotukset.</string>
     <string name="home_applications">Sovellukset</string>
     <string name="christmas_snow_state">Joululumi: %1$s</string>
+    <string name="spring_petals_state">Kevään terälehdet: %1$s</string>
 </resources>

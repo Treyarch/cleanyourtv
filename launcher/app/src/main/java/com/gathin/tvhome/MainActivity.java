@@ -154,7 +154,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private SuggestionArtwork suggestionArtwork;
     private FrameLayout root;
     private WallpaperPlayer wallpaperPlayer;
-    private SnowView snow;
+    private SeasonalParticlesView seasonalParticles;
     private GlassView glass;
     private View ambient;
     private TextView heroName;
@@ -531,9 +531,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glass.setStyle(cfg.glassStyle);
         if (festive) glass.setAccent(festival.accentColor());
         ambient = findViewById(R.id.ambient);
-        if (cfg.christmasSnow && animations && !reducedMotion) {
-            snow = new SnowView(this);
-            root.addView(snow, root.indexOfChild(ambient) + 1, new FrameLayout.LayoutParams(
+        if (animations && !reducedMotion && (cfg.christmasSnow || cfg.springPetals)) {
+            seasonalParticles = new SeasonalParticlesView(this, cfg.christmasSnow, cfg.springPetals);
+            root.addView(seasonalParticles, root.indexOfChild(ambient) + 1, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
         // The glow is one bitmap, so its alpha can be applied while drawing it. Otherwise every frame of
@@ -1201,7 +1201,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (gameDay != null) gameDay.start();
         sky.update();
         wallpaperPlayer.start();
-        if (snow != null) snow.setVisibility(View.VISIBLE);
+        if (seasonalParticles != null) seasonalParticles.setVisibility(View.VISIBLE);
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && lamp != null) {
             lamp.start();
@@ -1445,7 +1445,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.removeCallbacks(showIdleClock);
         endReorder();   // Home or another app while reordering keeps the order so far
         wallpaperPlayer.stop();
-        if (snow != null) snow.setVisibility(View.INVISIBLE);
+        if (seasonalParticles != null) seasonalParticles.setVisibility(View.INVISIBLE);
         stopAmbientAnimation();
         hero.animate().cancel();
         ambient.animate().cancel();

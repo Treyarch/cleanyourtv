@@ -154,4 +154,5 @@
     <string name="suggestions_permission">Consenti l’accesso alla programmazione TV nelle autorizzazioni dell’app per vedere i suggerimenti.</string>
     <string name="home_applications">Applicazioni</string>
     <string name="christmas_snow_state">Neve di Natale: %1$s</string>
+    <string name="spring_petals_state">Petali primaverili: %1$s</string>
 </resources>

@@ -84,4 +84,5 @@
     <string name="suggestions_permission">Dozvolite pristup TV programu u dozvolama aplikacije da biste videli predloge.</string>
     <string name="home_applications">Aplikacije</string>
     <string name="christmas_snow_state">Božićni sneg: %1$s</string>
+    <string name="spring_petals_state">Prolećne latice: %1$s</string>
 </resources>

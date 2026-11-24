@@ -61,6 +61,8 @@ The launcher's own page has these rows, top to bottom:
   Follow theme, or push the theme again.
 - **Christmas snow** adds falling snowflakes over the wallpaper and behind the Home controls. It is
   off by default and uses the **Animations** setting. Themes that enable `reduced_motion` pause it.
+- **Spring petals** adds drifting cherry blossom petals on the same layer. It is off by default and
+  follows the same motion settings as Christmas snow.
 - **Animations** on or off, and **Advanced effects** (tile lift, icon zoom and smooth ambient-colour
   transitions; they may use more memory) once animations are on.
 - **Suggestions** in the Sony fork shows a row below the dock with app recommendations and

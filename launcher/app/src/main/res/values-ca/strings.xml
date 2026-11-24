@@ -117,4 +117,5 @@
     <string name="suggestions_permission">Permet l’accés a la programació de TV als permisos de l’aplicació per veure els suggeriments.</string>
     <string name="home_applications">Aplicacions</string>
     <string name="christmas_snow_state">Neu de Nadal: %1$s</string>
+    <string name="spring_petals_state">Pètals de primavera: %1$s</string>
 </resources>

@@ -37,6 +37,7 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] clockChoices = new TextView[CLOCK_FORMATS.length];
     private TextView wallpaperChoice;
     private TextView christmasSnowChoice;
+    private TextView springPetalsChoice;
     private TextView animationsChoice;
     private TextView advancedChoice;
     private TextView followThemeChoice;
@@ -49,6 +50,7 @@ public final class LauncherSettingsActivity extends Activity {
     private boolean animations;
     private boolean advancedEffects;
     private boolean christmasSnow;
+    private boolean springPetals;
     private boolean reducedMotion;
 
     @Override
@@ -70,6 +72,7 @@ public final class LauncherSettingsActivity extends Activity {
         animations = config.animations;
         advancedEffects = config.animations && config.advancedEffects;
         christmasSnow = config.christmasSnow;
+        springPetals = config.springPetals;
         reducedMotion = config.reducedMotion;
 
         int[] ids = {R.id.columns4, R.id.columns5, R.id.columns6, R.id.columns7};
@@ -139,6 +142,13 @@ public final class LauncherSettingsActivity extends Activity {
             changed();
             refresh();
         });
+        springPetalsChoice = findViewById(R.id.springPetalsChoice);
+        springPetalsChoice.setOnClickListener(v -> {
+            springPetals = !springPetals;
+            choices.edit().putBoolean(Config.SPRING_PETALS_KEY, springPetals).apply();
+            changed();
+            refresh();
+        });
         animationsChoice = findViewById(R.id.animationsChoice);
         animationsChoice.setOnClickListener(v -> {
             animations = !animations;
@@ -181,7 +191,7 @@ public final class LauncherSettingsActivity extends Activity {
             if (!hasOnTvChoices()) return;
             choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations")
                     .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
-                    .remove(Config.CHRISTMAS_SNOW_KEY)
+                    .remove(Config.CHRISTMAS_SNOW_KEY).remove(Config.SPRING_PETALS_KEY)
                     .remove(Config.DOCK_OPACITY_KEY).remove(Config.CLOCK_FORMAT_KEY).remove(OpenOnStart.KEY).commit();
             Config current = Config.load(this);
             columns = current.columns;
@@ -191,6 +201,7 @@ public final class LauncherSettingsActivity extends Activity {
             animations = current.animations;
             advancedEffects = current.animations && current.advancedEffects;
             christmasSnow = current.christmasSnow;
+            springPetals = current.springPetals;
             reducedMotion = current.reducedMotion;
             changed();
             refresh();
@@ -359,9 +370,13 @@ public final class LauncherSettingsActivity extends Activity {
                         : getString(R.string.wallpaper_theme_default)));
         christmasSnowChoice.setText(getString(R.string.christmas_snow_state,
                 getString(christmasSnow ? R.string.on : R.string.off)));
-        boolean snowAvailable = animations && !reducedMotion;
-        christmasSnowChoice.setEnabled(snowAvailable);
-        christmasSnowChoice.setAlpha(snowAvailable ? 1f : 0.5f);
+        springPetalsChoice.setText(getString(R.string.spring_petals_state,
+                getString(springPetals ? R.string.on : R.string.off)));
+        boolean seasonalMotion = animations && !reducedMotion;
+        christmasSnowChoice.setEnabled(seasonalMotion);
+        springPetalsChoice.setEnabled(seasonalMotion);
+        christmasSnowChoice.setAlpha(seasonalMotion ? 1f : 0.5f);
+        springPetalsChoice.setAlpha(seasonalMotion ? 1f : 0.5f);
         openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
         suggestionsChoice.setText(getString(R.string.suggestions_state,
                 getString(Suggestions.enabled(this) ? R.string.on : R.string.off)));
@@ -372,7 +387,7 @@ public final class LauncherSettingsActivity extends Activity {
         return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
                 || choices.contains("animations") || choices.contains("advanced_effects")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
-                || choices.contains(Config.CHRISTMAS_SNOW_KEY)
+                || choices.contains(Config.CHRISTMAS_SNOW_KEY) || choices.contains(Config.SPRING_PETALS_KEY)
                 || choices.contains(Config.CLOCK_FORMAT_KEY) || choices.contains(OpenOnStart.KEY);
     }
 

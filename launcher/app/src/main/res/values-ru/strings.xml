@@ -160,4 +160,5 @@
     <string name="suggestions_permission">Чтобы видеть рекомендации, разрешите доступ к телепрограмме в настройках разрешений приложения.</string>
     <string name="home_applications">Приложения</string>
     <string name="christmas_snow_state">Рождественский снег: %1$s</string>
+    <string name="spring_petals_state">Весенние лепестки: %1$s</string>
 </resources>
