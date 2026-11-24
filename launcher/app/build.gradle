@@ -3,6 +3,7 @@ plugins {
 }
 
 def wallpaperFeed = providers.gradleProperty('launcherWallpaperFeed').getOrElse('false').toBoolean()
+def homeWeather = providers.gradleProperty('launcherHomeWeather').getOrElse('false').toBoolean()
 
 android {
     namespace 'com.gathin.tvhome'
@@ -20,11 +21,17 @@ android {
     }
 
     sourceSets {
-        // Only personal builds include the network client and its permission.
+        // Only personal builds include the network features they opt into.
         main.java.srcDir(wallpaperFeed ? 'src/wallpaperFeed/java' : 'src/offline/java')
-        if (wallpaperFeed) {
-            debug.manifest.srcFile 'src/wallpaperFeed/AndroidManifest.xml'
-            release.manifest.srcFile 'src/wallpaperFeed/AndroidManifest.xml'
+        main.java.srcDir(homeWeather ? 'src/homeWeather/java' : 'src/noHomeWeather/java')
+        if (homeWeather) {
+            main.assets.srcDir 'src/homeWeather/assets'
+            main.res.srcDir 'src/homeWeather/res'
+            test.java.srcDir 'src/homeWeatherTest/java'
+        }
+        if (wallpaperFeed || homeWeather) {
+            debug.manifest.srcFile 'src/online/AndroidManifest.xml'
+            release.manifest.srcFile 'src/online/AndroidManifest.xml'
         }
     }
 

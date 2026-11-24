@@ -213,6 +213,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView raceKicker, raceHeadline, raceSessions;
     /** game_day: each team's next game from an add-on, rotating in the race panel; null when the key is off. */
     private GameDay gameDay;
+    private HomeWeather homeWeather;
     private View raceBar;
     private LinearLayout racePager;
     private long rotationStart;
@@ -566,6 +567,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         greeting = findViewById(R.id.greeting);
         clockBlock = findViewById(R.id.leftBlock);
         clockRefresh = new ClockRefresh(clockBlock);
+        homeWeather = HomeWeather.create(this, findViewById(R.id.clock), handler);
         greetingColor = greeting.getCurrentTextColor();
         if (!cfg.showGreeting) greeting.setVisibility(View.GONE);
         boolean rtlMenuBar = getResources().getBoolean(R.bool.rtl_menu_bar);
@@ -1199,6 +1201,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (showStats) startStats();
         if (gameDay != null) gameDay.start();
+        if (homeWeather != null) homeWeather.start();
         sky.update();
         wallpaperPlayer.start();
         if (seasonalParticles != null) seasonalParticles.setVisibility(View.VISIBLE);
@@ -1455,6 +1458,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         startPending = null;   // leaving Home before the network came back: the boot's app stays closed
         stopStats();
         if (gameDay != null) gameDay.stop();
+        if (homeWeather != null) homeWeather.stop();
         handler.removeCallbacks(turnTick);
         if (lamp != null) lamp.stop();
         cancelPendingFocusScroll();

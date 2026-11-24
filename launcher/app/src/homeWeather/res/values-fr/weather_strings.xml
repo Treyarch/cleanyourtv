@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="weather_location">Lieu météo</string>
+    <string name="weather_off">Lieu météo · Désactivé</string>
+    <string name="weather_selected">Lieu météo · %1$s</string>
+    <string name="weather_city_hint">Ville ou code postal</string>
+    <string name="weather_search_info">Open-Meteo utilise votre recherche et la ville choisie pour fournir la météo actuelle.</string>
+    <string name="weather_search">Rechercher</string>
+    <string name="weather_searching">Recherche…</string>
+    <string name="weather_search_short">Saisissez au moins deux caractères.</string>
+    <string name="weather_search_failed">Open-Meteo est injoignable. Réessayez.</string>
+    <string name="weather_search_empty">Aucun résultat. Essayez un autre nom ou code postal.</string>
+    <string name="weather_turn_off">Désactiver</string>
+    <string name="weather_credit">Données météo fournies par Open-Meteo</string>
+    <string name="weather_description">%1$s, %2$s, %3$s</string>
+    <string name="weather_clear">Ciel dégagé</string>
+    <string name="weather_partly_cloudy">Partiellement nuageux</string>
+    <string name="weather_cloudy">Couvert</string>
+    <string name="weather_fog">Brouillard</string>
+    <string name="weather_rain">Pluie</string>
+    <string name="weather_snow">Neige</string>
+    <string name="weather_storm">Orage</string>
+    <string name="weather_unknown">Conditions indisponibles</string>
+</resources>

@@ -135,6 +135,7 @@ public final class LauncherSettingsActivity extends Activity {
         }
         wallpaperChoice = findViewById(R.id.wallpaperChoice);
         wallpaperChoice.setOnClickListener(v -> showWallpaperPicker());
+        HomeWeather.bindSettings(this, (LinearLayout) clockChoices[0].getParent());
         christmasSnowChoice = findViewById(R.id.christmasSnowChoice);
         christmasSnowChoice.setOnClickListener(v -> {
             christmasSnow = !christmasSnow;

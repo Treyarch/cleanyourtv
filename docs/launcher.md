@@ -56,6 +56,15 @@ The launcher's own page has these rows, top to bottom:
   its own row (`dock_row`, on by default).
 - **Clock**: **System** follows the TV's 12- or 24-hour setting; **12-hour** or **24-hour** sets the launcher's
   clocks (Home and the clock screensaver) to that, whatever the TV uses (`clock_format` in a theme).
+- **Weather location** is available in the Sony fork when building `launcher/` with
+  `./gradlew -PlauncherHomeWeather=true assembleRelease`. Search by city or postal code and pick a match
+  to show its current temperature in Celsius and a Lucide icon just left of the Home clock. Select
+  **Turn off** to remove the display and clear the location. Home refreshes hourly while it is on screen
+  and hides readings two hours after the last successful update. The city search and the selected coordinates
+  go to [Open-Meteo](https://open-meteo.com/) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
+  The source credit is in **Weather location**. The display rounds the temperature and groups conditions
+  by icon. The [Lucide icon license](../launcher/app/src/homeWeather/assets/ICONS-LICENSE-LUCIDE.txt)
+  covers the icons adapted for Android.
 - **Wallpaper**: one picture from the theme's collection (or its `wallpaper.jpg`), **None**, or **Theme
   default**. A pick holds that picture and stops the rotation until you choose Theme default, press
   Follow theme, or push the theme again.
