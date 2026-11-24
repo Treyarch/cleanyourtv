@@ -59,6 +59,8 @@ The launcher's own page has these rows, top to bottom:
 - **Wallpaper**: one picture from the theme's collection (or its `wallpaper.jpg`), **None**, or **Theme
   default**. A pick holds that picture and stops the rotation until you choose Theme default, press
   Follow theme, or push the theme again.
+- **Christmas snow** adds falling snowflakes over the wallpaper and behind the Home controls. It is
+  off by default and uses the **Animations** setting. Themes that enable `reduced_motion` pause it.
 - **Animations** on or off, and **Advanced effects** (tile lift, icon zoom and smooth ambient-colour
   transitions; they may use more memory) once animations are on.
 - **Suggestions** in the Sony fork shows a row below the dock with app recommendations and

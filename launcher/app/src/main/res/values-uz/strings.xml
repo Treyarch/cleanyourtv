@@ -118,4 +118,5 @@
     <string name="suggestions_state">Tavsiyalar: %1$s</string>
     <string name="suggestions_permission">Tavsiyalarni ko‘rish uchun ilova ruxsatlarida TV dasturlari ro‘yxatiga kirishga ruxsat bering.</string>
     <string name="home_applications">Ilovalar</string>
+    <string name="christmas_snow_state">Rojdestvo qori: %1$s</string>
 </resources>

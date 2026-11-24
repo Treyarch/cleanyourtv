@@ -101,4 +101,5 @@
     <string name="suggestions_state">Öneriler: %1$s</string>
     <string name="suggestions_permission">Önerileri görmek için uygulama izinlerinden TV program listelerine erişime izin verin.</string>
     <string name="home_applications">Uygulamalar</string>
+    <string name="christmas_snow_state">Noel karı: %1$s</string>
 </resources>

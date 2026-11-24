@@ -119,4 +119,5 @@
     <string name="suggestions_state">Suggesties: %1$s</string>
     <string name="suggestions_permission">Geef de app toegang tot tv-programmagegevens via de app-machtigingen om suggesties te zien.</string>
     <string name="home_applications">Apps</string>
+    <string name="christmas_snow_state">Kerstsneeuw: %1$s</string>
 </resources>

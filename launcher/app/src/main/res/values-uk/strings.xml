@@ -159,4 +159,5 @@
     <string name="suggestions_state">Рекомендації: %1$s</string>
     <string name="suggestions_permission">Щоб переглядати рекомендації, дозвольте доступ до телепрограми в налаштуваннях дозволів застосунку.</string>
     <string name="home_applications">Застосунки</string>
+    <string name="christmas_snow_state">Різдвяний сніг: %1$s</string>
 </resources>

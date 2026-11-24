@@ -102,4 +102,5 @@
     <string name="suggestions_state">Suggestions : %1$s</string>
     <string name="suggestions_permission">Autorisez l’accès aux programmes TV dans les autorisations de l’application pour afficher les suggestions.</string>
     <string name="home_applications">Applications</string>
+    <string name="christmas_snow_state">Neige de Noël : %1$s</string>
 </resources>

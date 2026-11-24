@@ -36,6 +36,7 @@ public final class LauncherSettingsActivity extends Activity {
     private static final String[] CLOCK_FORMATS = {"system", "12", "24"};
     private final TextView[] clockChoices = new TextView[CLOCK_FORMATS.length];
     private TextView wallpaperChoice;
+    private TextView christmasSnowChoice;
     private TextView animationsChoice;
     private TextView advancedChoice;
     private TextView followThemeChoice;
@@ -47,6 +48,8 @@ public final class LauncherSettingsActivity extends Activity {
     private String clockFormat;
     private boolean animations;
     private boolean advancedEffects;
+    private boolean christmasSnow;
+    private boolean reducedMotion;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -66,6 +69,8 @@ public final class LauncherSettingsActivity extends Activity {
         clockFormat = config.clockFormat;
         animations = config.animations;
         advancedEffects = config.animations && config.advancedEffects;
+        christmasSnow = config.christmasSnow;
+        reducedMotion = config.reducedMotion;
 
         int[] ids = {R.id.columns4, R.id.columns5, R.id.columns6, R.id.columns7};
         for (int i = 0; i < ids.length; i++) {
@@ -127,6 +132,13 @@ public final class LauncherSettingsActivity extends Activity {
         }
         wallpaperChoice = findViewById(R.id.wallpaperChoice);
         wallpaperChoice.setOnClickListener(v -> showWallpaperPicker());
+        christmasSnowChoice = findViewById(R.id.christmasSnowChoice);
+        christmasSnowChoice.setOnClickListener(v -> {
+            christmasSnow = !christmasSnow;
+            choices.edit().putBoolean(Config.CHRISTMAS_SNOW_KEY, christmasSnow).apply();
+            changed();
+            refresh();
+        });
         animationsChoice = findViewById(R.id.animationsChoice);
         animationsChoice.setOnClickListener(v -> {
             animations = !animations;
@@ -169,6 +181,7 @@ public final class LauncherSettingsActivity extends Activity {
             if (!hasOnTvChoices()) return;
             choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations")
                     .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
+                    .remove(Config.CHRISTMAS_SNOW_KEY)
                     .remove(Config.DOCK_OPACITY_KEY).remove(Config.CLOCK_FORMAT_KEY).remove(OpenOnStart.KEY).commit();
             Config current = Config.load(this);
             columns = current.columns;
@@ -177,6 +190,8 @@ public final class LauncherSettingsActivity extends Activity {
             clockFormat = current.clockFormat;
             animations = current.animations;
             advancedEffects = current.animations && current.advancedEffects;
+            christmasSnow = current.christmasSnow;
+            reducedMotion = current.reducedMotion;
             changed();
             refresh();
         });
@@ -342,6 +357,11 @@ public final class LauncherSettingsActivity extends Activity {
                 "none".equals(wallpaperCurrent) ? getString(R.string.wallpaper_none)
                         : wallpaperCurrent != null ? wallpaperCurrent
                         : getString(R.string.wallpaper_theme_default)));
+        christmasSnowChoice.setText(getString(R.string.christmas_snow_state,
+                getString(christmasSnow ? R.string.on : R.string.off)));
+        boolean snowAvailable = animations && !reducedMotion;
+        christmasSnowChoice.setEnabled(snowAvailable);
+        christmasSnowChoice.setAlpha(snowAvailable ? 1f : 0.5f);
         openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
         suggestionsChoice.setText(getString(R.string.suggestions_state,
                 getString(Suggestions.enabled(this) ? R.string.on : R.string.off)));
@@ -352,6 +372,7 @@ public final class LauncherSettingsActivity extends Activity {
         return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
                 || choices.contains("animations") || choices.contains("advanced_effects")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
+                || choices.contains(Config.CHRISTMAS_SNOW_KEY)
                 || choices.contains(Config.CLOCK_FORMAT_KEY) || choices.contains(OpenOnStart.KEY);
     }
 

@@ -156,4 +156,5 @@
     <string name="suggestions_state">הצעות: %1$s</string>
     <string name="suggestions_permission">כדי להציג הצעות, אפשרו גישה לרשימות השידורים בהרשאות האפליקציה.</string>
     <string name="home_applications">אפליקציות</string>
+    <string name="christmas_snow_state">שלג חג המולד: %1$s</string>
 </resources>

@@ -116,4 +116,5 @@
     <string name="suggestions_state">Doporučení: %1$s</string>
     <string name="suggestions_permission">Chcete-li zobrazit doporučení, povolte v oprávněních aplikace přístup k televiznímu programu.</string>
     <string name="home_applications">Aplikace</string>
+    <string name="christmas_snow_state">Vánoční sníh: %1$s</string>
 </resources>

@@ -105,4 +105,5 @@
     <string name="suggestions_state">Forslag: %1$s</string>
     <string name="suggestions_permission">Tillad adgang til tv-programoversigter i appens tilladelser for at se forslag.</string>
     <string name="home_applications">Apps</string>
+    <string name="christmas_snow_state">Julesne: %1$s</string>
 </resources>
